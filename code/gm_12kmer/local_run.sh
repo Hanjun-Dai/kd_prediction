@@ -2,8 +2,8 @@
 
 DATA=12mer-kd
 
-DATA_ROOT=$HOME/Research/molecule_learning/data/string_kernel/$DATA
-RESULT_ROOT=$HOME/scratch/results/string_kernel/$DATA
+DATA_ROOT=$PWD/../../data/$DATA
+RESULT_ROOT=$HOME/scratch/results/$DATA
 
 tool=kernel_loopy_bp
 
