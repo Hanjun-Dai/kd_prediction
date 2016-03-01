@@ -3,7 +3,7 @@
 DATA=12mer-kd
 
 DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=$HOME/scratch/results/$DATA
+RESULT_ROOT=results/$DATA
 
 tool=kernel_loopy_bp
 

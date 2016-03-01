@@ -1,12 +1,19 @@
-include $(HOME)/Workspace/cpp/graphnn/core_makefile
+GNN_HOME=$(HOME)/Workspace/cpp/graphnn
+
+include $(GNN_HOME)/make_common
+
+lib_dir := $(GNN_HOME)/build/lib
+gnn_lib := $(lib_dir)/libgnn.a
+
    
 all: build/kernel_mean_field build/kernel_loopy_bp
 
-CXXFLAGS += -I./include 
+include_dirs := $(CUDA_HOME)/include $(MKL_ROOT)/include $(GNN_HOME)/include/matrix $(GNN_HOME)/include/graphnn ./include
+CXXFLAGS += $(addprefix -I,$(include_dirs))
 
-build/%: src/%.cpp include/* $(gnn_objs) $(gnn_include)
+build/%: src/%.cpp $(gnn_lib) ./include/*
 	$(dir_guard)
-	$(CXX) $(CXXFLAGS) -I$(RDBASE)/Code -o $@ $(filter %.cpp %.o %.cuo, $^) $(LDFLAGS) -L$(RDBASE)/lib -lGraphMol -lRDGeneral -lSmilesParse -lDepictor -lSmilesParse -lFileParsers -lFingerprints
+	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp, %.a $^) -L$(lib_dir) -lgnn $(LDFLAGS)
 
 clean:
-	rm build/*
+	rm -rf build

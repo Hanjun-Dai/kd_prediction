@@ -5,27 +5,30 @@
 #include "utils.h"
 #include "dense_matrix.h"
 #include "linear_param.h"
-#include "graphnn.h"
+#include "nngraph.h"
 #include "msg_pass_param.h"
 #include "param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
-#include "gather_layer.h"
+#include "c_add_layer.h"
 #include "mse_criterion_layer.h"
 #include "abs_criterion_layer.h"
-#include "exp_layer.h"
+#include "model.h"
+#include "learner.h"
 
-const MatMode mode = GPU;
+const MatMode mode = CPU;
 
 std::vector< Graph > graph_data;
 std::vector<Dtype> labels;
 std::vector<int> train_idx, test_idx;
 
-GraphNN<mode, Dtype> gnn;
+NNGraph<mode, Dtype> gnn;
+Model<mode, Dtype> model;
 DenseMat<CPU, Dtype> x_cpu, y_cpu;
-
-GraphData<mode, Dtype> g_input(DENSE), g_label(DENSE);
+DenseMat<mode, Dtype> input, label;
+GraphStruct graph;
+std::map<std::string, void*> init_const_dict;
 
 std::vector< unsigned > prefix_sum;
 inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num)
@@ -47,8 +50,7 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 		prefix_sum[i] = prefix_sum[i - 1]; // shift
 	prefix_sum[0] = 0;	
 	
-	g_input.graph->Resize(num, node_cnt);
-	g_label.graph->Resize(1, num);
+	graph.Resize(num, node_cnt);
 	x_cpu.Zeros(node_cnt, cfg::node_dim);
 	y_cpu.Zeros(num, 1);
 	
@@ -61,7 +63,7 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 		{
 			ptr[g.node_label[j]] = 1.0;
 			ptr += cfg::node_dim;
-			g_input.graph->AddNode(i - st, prefix_sum[i - st] + j);
+			graph.AddNode(i - st, prefix_sum[i - st] + j);
 		}
 	}
 	
@@ -76,7 +78,7 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 			for (size_t k = 0; k < g.adj.head[j].size(); ++k)
 			{
 				y = prefix_sum[i - st] + g.adj.head[j][k];
-				g_input.graph->AddEdge(cur_edge, x, y);	
+				graph.AddEdge(cur_edge, x, y);	
 				cur_edge++;
 			}
 		}
@@ -87,21 +89,22 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
         y_cpu.data[i - st] = labels[ idx_list[i] ]; 
     }
 
-	g_input.node_states->DenseDerived().CopyFrom(x_cpu);
-	g_label.node_states->DenseDerived().CopyFrom(y_cpu);
+	input.CopyFrom(x_cpu);
+	label.CopyFrom(y_cpu);
 }
 
 inline void MainLoop()
 {
 	DenseMat<CPU, Dtype> output_buf;
 
+	MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	int max_iter = (long long)cfg::max_epoch; // * (long long)train_idx.size() / cfg::batch_size;
 	unsigned cur_pos = 0;
 	int init_iter = cfg::iter;
 	if (init_iter > 0)
 	{
 		std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
-		gnn.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
+		//gnn.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
 	}
 
 	Dtype mae, rmse;
@@ -115,12 +118,13 @@ inline void MainLoop()
 			for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
 			{
 				GetBatch(test_idx, i, cfg::batch_size);
-				gnn.ForwardData({{"input", &g_input}}, TEST);
-			    gnn.GetDenseNodeState("output", output_buf);
+				model.SetupConstParams(init_const_dict); 
+				gnn.ForwardData({{"input", &input}}, TEST);
+			    gnn.GetState("output", output_buf);
                 auto& ground_truth = y_cpu;
                 for (unsigned j = 0; j < ground_truth.rows; ++j)
                     fprintf(test_pred_fid, "%.6f %.6f\n", output_buf.data[j], ground_truth.data[j]);
-				auto loss_map = gnn.ForwardLabel({{"mse", &g_label}, {"mae", &g_label}});
+				auto loss_map = gnn.ForwardLabel({{"mse", &label}, {"mae", &label}});
 				rmse += loss_map["mse"];
 				mae += loss_map["mae"];
 			}
@@ -133,7 +137,7 @@ inline void MainLoop()
 		if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
 		{			
 			printf("saving model for iter=%d\n", cfg::iter);			
-			gnn.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
+			//gnn.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
 		}
 		
 		if (cur_pos + cfg::batch_size > train_idx.size())
@@ -143,8 +147,9 @@ inline void MainLoop()
 		}
 	
 		GetBatch(train_idx, cur_pos, cfg::batch_size);
-		gnn.ForwardData({{"input", &g_input}}, TRAIN);
-		auto loss_map = gnn.ForwardLabel({{"mse", &g_label}, {"mae", &g_label}});
+		model.SetupConstParams(init_const_dict); 
+		gnn.ForwardData({{"input", &input}}, TRAIN);
+		auto loss_map = gnn.ForwardLabel({{"mse", &label}, {"mae", &label}});
 
     	if (cfg::iter % cfg::report_interval == 0)
 		{
@@ -152,7 +157,7 @@ inline void MainLoop()
 		}
 		
 		gnn.BackPropagation();
-		gnn.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);
+		learner.Update();
 	}
 }
 

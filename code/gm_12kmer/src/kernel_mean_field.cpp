@@ -3,82 +3,50 @@
 
 void InitModel()
 {
+    init_const_dict["n2n"] = &graph;
+	init_const_dict["subgraph_pool"] = &graph;	
 	const Dtype init_scale = 0.05;
 	
-	auto* n2nsum_param = new NodeCentricPoolParam<mode, Dtype>("n2n");	
-	gnn.AddParam(n2nsum_param);	
-	auto* subgsum_param = new SubgraphPoolParam<mode, Dtype>("subgraph_pool");
-	gnn.AddParam(subgsum_param);
+	auto* n2nsum_param = add_const<Node2NodePoolParam>(model, "n2n");	
+	auto* subgsum_param = add_const<SubgraphPoolParam>(model, "subgraph_pool");
 	
-    auto* w_n2l = new LinearParam<mode, Dtype>("input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);		
-    gnn.AddParam(w_n2l);
+    auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);
+    auto* p_node_conv = add_diff<LinearParam>(model, "linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);
+	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
+	auto* h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
+	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
 
-    auto* p_node_conv = new LinearParam<mode, Dtype>("linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);		
-    gnn.AddParam(p_node_conv);
-
-	ILayer<mode, Dtype>* input_layer = new InputLayer<mode, Dtype>("input", GraphAtt::NODE);
-    auto* input_message = new SingleParamNodeLayer<mode, Dtype>("input_node_linear", w_n2l, GraphAtt::NODE); 
-	auto* input_potential_layer = new ReLULayer<mode, Dtype>("init_relu", GraphAtt::NODE, WriteType::INPLACE); 
-
-	gnn.AddEdge(input_layer, input_message);
-	gnn.AddEdge(input_message, input_potential_layer);
+	ILayer<mode, Dtype>* input_layer = cl<InputLayer>("input", gnn, {});
+    auto* input_message = cl<ParamLayer>(gnn, {input_layer}, {w_n2l}); 
+	auto* input_potential_layer = cl<ReLULayer>(gnn, {input_message}); 
 
 	int lv = 0;
 	ILayer<mode, Dtype>* cur_message_layer = input_potential_layer;
 	while (lv < cfg::max_lv)
 	{	
 		lv++; 
-		auto* n2npool = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("n2npool_%d", lv), n2nsum_param, GraphAtt::NODE);
+		auto* n2npool = cl<ParamLayer>(gnn, {cur_message_layer}, {n2nsum_param});
 
-		auto* node_linear = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("nodelinear_%d", lv), p_node_conv, GraphAtt::NODE);
+		auto* node_linear = cl<ParamLayer>(gnn, {n2npool}, {p_node_conv});
 
-		auto* merged_linear = new NodeGatherLayer<mode, Dtype>(fmt::sprintf("message_%d", lv));  
+		auto* merged_linear = cl<CAddLayer>(gnn, {node_linear, input_message});  
 
-		auto* new_message = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_%d", lv), GraphAtt::NODE, WriteType::INPLACE); 
-
-		gnn.AddEdge(cur_message_layer, n2npool);
-		gnn.AddEdge(n2npool, node_linear);		
-		gnn.AddEdge(node_linear, merged_linear);	
-		gnn.AddEdge(input_message, merged_linear);
-		gnn.AddEdge(merged_linear, new_message);
-
-		cur_message_layer = new_message;
+		cur_message_layer = cl<ReLULayer>(gnn, {merged_linear}); 
 	}			
 	
-	auto* out_params = new LinearParam<mode, Dtype>("outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
-	gnn.AddParam(out_params); 
-	
-	auto* out_linear = new SingleParamNodeLayer<mode, Dtype>("outlinear", out_params, GraphAtt::NODE);
-	gnn.AddLayer(out_linear);		
-	gnn.AddEdge(cur_message_layer, out_linear);
-		
-	auto* reluact_fp = new ReLULayer<mode, Dtype>("reluact_fp", GraphAtt::NODE, WriteType::INPLACE);
-	gnn.AddLayer(reluact_fp);
-	gnn.AddEdge(out_linear, reluact_fp);
+	auto* out_linear = cl<ParamLayer>(gnn, {cur_message_layer}, {out_params});		
+	auto* reluact_fp = cl<ReLULayer>(gnn, {out_linear});
 
-	auto* y_potential = new SingleParamNodeLayer<mode, Dtype>("y_potential", subgsum_param, GraphAtt::NODE);
-	gnn.AddLayer(y_potential);
-	gnn.AddEdge(reluact_fp, y_potential);
+	auto* y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgsum_param});
 
-	auto* h1_weight = new LinearParam<mode, Dtype>("h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
-	gnn.AddParam(h1_weight); 
-
-	auto* hidden = new SingleParamNodeLayer<mode, Dtype>("hidden", h1_weight, GraphAtt::NODE);
-	gnn.AddEdge(y_potential, hidden);	
+	auto* hidden = cl<ParamLayer>(gnn, {y_potential}, {h1_weight});
 	
-	auto* reluact_out_nn = new ReLULayer<mode, Dtype>("reluact_out_nn", GraphAtt::NODE, WriteType::INPLACE); 
-	gnn.AddEdge(hidden, reluact_out_nn);		
-
-	auto* h2_weight = new LinearParam<mode, Dtype>("h2_weight", cfg::n_hidden, 1, 0, init_scale);
-	gnn.AddParam(h2_weight);
-	auto* output = new SingleParamNodeLayer<mode, Dtype>("output", h2_weight, GraphAtt::NODE);
-	gnn.AddEdge(reluact_out_nn, output);
+	auto* reluact_out_nn = cl<ReLULayer>(gnn, {hidden}); 
 	
-	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>("mse");	
-	gnn.AddEdge(output, mse_criterion);
+	auto* output = cl<ParamLayer>("output", gnn, {reluact_out_nn}, {h2_weight});
 	
-	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>("mae", PropErr::N);	
-	gnn.AddEdge(output, mae_criterion);
+	cl<MSECriterionLayer>("mse", gnn, {output});	
+	cl<ABSCriterionLayer>("mae", gnn, {output}, PropErr::N);
 }
 
 int main(int argc, const char** argv)
