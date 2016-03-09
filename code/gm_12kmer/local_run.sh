@@ -8,8 +8,9 @@ RESULT_ROOT=results/$DATA
 tool=kernel_loopy_bp
 
 LV=2
+dna_len=12
 CONV_SIZE=64
-FP_LEN=1024
+FP_LEN=128
 n_hidden=128
 bsize=64
 learning_rate=0.0005
@@ -26,6 +27,7 @@ fi
 
 build/$tool \
 	       -string $DATA_ROOT/${DATA}.txt \
+	       -dna_len $dna_len \
                -train_idx $DATA_ROOT/10fold_idx/train_idx-${fold}.txt \
                -test_idx $DATA_ROOT/10fold_idx/test_idx-${fold}.txt \
                -lr $learning_rate \

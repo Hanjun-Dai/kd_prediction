@@ -8,12 +8,12 @@ void InitModel()
 	const Dtype init_scale = 0.05;
 	
 	auto* n2nsum_param = add_const<Node2NodePoolParam>(model, "n2n");	
-	auto* subgsum_param = add_const<SubgraphPoolParam>(model, "subgraph_pool");
+	auto* subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
 	
     auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);
     auto* p_node_conv = add_diff<LinearParam>(model, "linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);
 	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
-	auto* h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
+	auto* h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::dna_len, cfg::n_hidden, 0, init_scale);
 	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
 
 	ILayer<mode, Dtype>* input_layer = cl<InputLayer>("input", gnn, {});
@@ -37,7 +37,7 @@ void InitModel()
 	auto* out_linear = cl<ParamLayer>(gnn, {cur_message_layer}, {out_params});		
 	auto* reluact_fp = cl<ReLULayer>(gnn, {out_linear});
 
-	auto* y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgsum_param});
+	auto* y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgconcat_param});
 
 	auto* hidden = cl<ParamLayer>(gnn, {y_potential}, {h1_weight});
 	

@@ -14,6 +14,7 @@ struct cfg
     static unsigned n_hidden;
     static unsigned batch_size; 
     static unsigned max_epoch; 
+    static unsigned dna_len;
     static unsigned test_interval; 
     static unsigned report_interval; 
     static unsigned save_interval; 
@@ -27,8 +28,10 @@ struct cfg
     {
         for (int i = 1; i < argc; i += 2)
         {             
+            if (strcmp(argv[i], "-dna_len") == 0)
+                dna_len = atof(argv[i + 1]);
 		    if (strcmp(argv[i], "-lr") == 0)
-		        lr = atof(argv[i + 1]);                                  
+		        lr = atof(argv[i + 1]);
             if (strcmp(argv[i], "-cur_iter") == 0)
                 iter = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-hidden") == 0)
@@ -65,6 +68,7 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 
+        std::cerr << "dna_len = " << dna_len << std::endl;
         std::cerr << "n_hidden = " << n_hidden << std::endl;
 		std::cerr << "max level = " << max_lv << std::endl;
     	std::cerr << "conv size = " << conv_size << std::endl;
@@ -88,7 +92,7 @@ int cfg::iter = 0;
 int cfg::max_lv = 4;
 int cfg::conv_size = 20;
 int cfg::fp_len = 512;
-
+unsigned cfg::dna_len = 0;
 unsigned cfg::n_hidden = 100;
 unsigned cfg::batch_size = 50;
 unsigned cfg::max_epoch = 200;
