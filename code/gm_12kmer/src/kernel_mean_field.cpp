@@ -4,7 +4,7 @@
 void InitModel()
 {
     init_const_dict["n2n"] = &graph;
-	init_const_dict["subgraph_pool"] = &graph;	
+	init_const_dict["subgraph_concat"] = &graph;	
 	const Dtype init_scale = 0.05;
 	
 	auto* n2nsum_param = add_const<Node2NodePoolParam>(model, "n2n");	

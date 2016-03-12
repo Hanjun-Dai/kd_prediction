@@ -10,10 +10,10 @@ tool=kernel_loopy_bp
 LV=2
 dna_len=12
 CONV_SIZE=64
-FP_LEN=128
+FP_LEN=1024
 n_hidden=128
 bsize=64
-learning_rate=0.0005
+learning_rate=0.005
 max_iter=2000000
 cur_iter=0
 dev_id=0
@@ -37,7 +37,7 @@ build/$tool \
                -hidden $n_hidden \
                -int_test 1000 \
                -int_report 100 \
-               -l2 0 \
+               -l2 0.00 \
                -m 0.9 \
                -lv $LV \
                -conv $CONV_SIZE \
