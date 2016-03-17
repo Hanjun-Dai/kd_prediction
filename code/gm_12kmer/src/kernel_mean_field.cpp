@@ -7,8 +7,9 @@ void InitModel()
 	init_const_dict["subgraph_concat"] = &graph;	
 	const Dtype init_scale = 0.05;
 	
-	auto* n2nsum_param = add_const<Node2NodePoolParam>(model, "n2n");	
+	auto* n2nsum_param = add_const<Node2NodeMsgParam>(model, "n2n");	
 	auto* subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
+	auto* node_pool_param = add_const<NodeAvgPoolParam>(model, "avg_pool");
 	
     auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);
     auto* p_node_conv = add_diff<LinearParam>(model, "linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);
@@ -37,7 +38,8 @@ void InitModel()
 	auto* out_linear = cl<ParamLayer>(gnn, {cur_message_layer}, {out_params});		
 	auto* reluact_fp = cl<ReLULayer>(gnn, {out_linear});
 
-	auto* y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgconcat_param});
+	auto* out_pool = cl<ParamLayer>(gnn, {reluact_fp}, {node_pool_param});
+	auto* y_potential = cl<ParamLayer>(gnn, {out_pool}, {subgconcat_param});
 
 	auto* hidden = cl<ParamLayer>(gnn, {y_potential}, {h1_weight});
 	

@@ -7,6 +7,7 @@
 #include "linear_param.h"
 #include "nngraph.h"
 #include "msg_pass_param.h"
+#include "graph_pool_param.h"
 #include "param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"

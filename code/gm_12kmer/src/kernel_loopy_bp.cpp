@@ -9,14 +9,14 @@ void InitModel()
 	
 	const Dtype init_scale = 0.05;
 	
-	auto* n2esum_param = add_const<Node2EdgePoolParam>(model, "n2e");	
-	auto* e2esum_param = add_const<Edge2EdgePoolParam>(model, "e2e");	
-	auto* subgsum_param = add_const<SubgraphPoolParam>(model, "subgraph_pool");
+	auto* n2esum_param = add_const<Node2EdgeMsgParam>(model, "n2e");	
+	auto* e2esum_param = add_const<Edge2EdgeMsgParam>(model, "e2e");	
+	auto* subgsum_param = add_const<SubgraphMsgParam>(model, "subgraph_pool");
 
 	auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale, BiasOption::NONE);
     auto* p_edge_conv = add_diff<LinearParam>(model, "linear-edge-conv", cfg::conv_size, cfg::conv_size, 0, init_scale, BiasOption::NONE);
 
-	auto* e2nsum_param = add_const<Edge2NodePoolParam>(model, "e2n");
+	auto* e2nsum_param = add_const<Edge2NodeMsgParam>(model, "e2n");
 	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
 	auto* h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
 	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
