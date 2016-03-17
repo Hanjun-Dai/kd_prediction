@@ -1,0 +1,12 @@
+net: "net.prototxt"
+test_iter: 8325
+test_interval: 1000
+base_lr: 0.001
+lr_policy: "fixed"
+display: 100
+max_iter: 8000000
+momentum: 0.9
+weight_decay: 0.000
+snapshot: 10000
+snapshot_prefix: "saved/"
+solver_mode: GPU

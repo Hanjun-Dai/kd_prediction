@@ -5,11 +5,12 @@ void InitModel()
 {
     init_const_dict["n2n"] = &graph;
 	init_const_dict["subgraph_concat"] = &graph;	
+	init_const_dict["max_pool"] = &graph;	
 	const Dtype init_scale = 0.05;
 	
 	auto* n2nsum_param = add_const<Node2NodeMsgParam>(model, "n2n");	
 	auto* subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
-	auto* node_pool_param = add_const<NodeAvgPoolParam>(model, "avg_pool");
+	auto* node_pool_param = add_const<NodeMaxPoolParam>(model, "max_pool");
 	
     auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);
     auto* p_node_conv = add_diff<LinearParam>(model, "linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);

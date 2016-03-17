@@ -18,7 +18,7 @@
 #include "model.h"
 #include "learner.h"
 
-const MatMode mode = GPU;
+const MatMode mode = CPU;
 
 std::vector< Graph > graph_data;
 std::vector<Dtype> labels;

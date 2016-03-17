@@ -5,14 +5,14 @@ DATA=12mer-kd
 DATA_ROOT=$PWD/../../data/$DATA
 RESULT_ROOT=results/$DATA
 
-tool=kernel_loopy_bp
+tool=kernel_mean_field
 
-LV=2
+LV=1
 dna_len=12
 CONV_SIZE=64
-FP_LEN=1024
-n_hidden=128
-bsize=64
+FP_LEN=64
+n_hidden=64
+bsize=100
 learning_rate=0.005
 max_iter=2000000
 cur_iter=0
