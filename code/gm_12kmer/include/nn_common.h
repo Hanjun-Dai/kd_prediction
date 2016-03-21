@@ -1,5 +1,6 @@
 #ifndef NN_COMMON_H
 #define NN_COMMON_H
+#define sqr(x) ((x) * (x))
 
 #include "config.h"
 #include "utils.h"
@@ -108,14 +109,16 @@ inline void MainLoop()
 		//gnn.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
 	}
 
-	Dtype mae, rmse;
+	Dtype* y_label = new Dtype[test_idx.size()];
+	Dtype* y_pred = new Dtype[test_idx.size()];
+	Dtype best_pcc = 0, best_rmse = 0;
+
 	for (; cfg::iter <= max_iter; ++cfg::iter, cur_pos += cfg::batch_size)
 	{
 		if (cfg::iter % cfg::test_interval == 0)
 		{			
-			std::cerr << "testing" << std::endl;
-            FILE* test_pred_fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
-			rmse = mae = 0.0;
+			std::cerr << "testing" << std::endl;            
+			Dtype rmse = 0.0, mae = 0.0;
 			for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
 			{
 				GetBatch(test_idx, i, cfg::batch_size);
@@ -124,15 +127,43 @@ inline void MainLoop()
 			    gnn.GetState("output", output_buf);
                 auto& ground_truth = y_cpu;
                 for (unsigned j = 0; j < ground_truth.rows; ++j)
-                    fprintf(test_pred_fid, "%.6f %.6f\n", output_buf.data[j], ground_truth.data[j]);
+                {
+                	y_label[i + j] = ground_truth.data[j];
+                	y_pred[i + j] = output_buf.data[j];
+                }
 				auto loss_map = gnn.ForwardLabel({{"mse", &label}, {"mae", &label}});
 				rmse += loss_map["mse"];
 				mae += loss_map["mae"];
 			}
-            fclose(test_pred_fid);
+			Dtype label_avg = 0.0, pred_avg = 0.0, nume = 0.0, s1 = 0.0, s2 = 0.0;
+			for (size_t i = 0; i < test_idx.size(); ++i)
+			{
+				label_avg += y_label[i];
+				pred_avg += y_pred[i];
+			}
+			label_avg /= test_idx.size();
+			pred_avg /= test_idx.size();
+
+			for (size_t i = 0; i < test_idx.size(); ++i)
+			{
+				nume += (y_label[i] - label_avg) * (y_pred[i] - pred_avg);
+				s1 += sqr(y_label[i] - label_avg);
+				s2 += sqr(y_pred[i] - pred_avg);
+			}
+			Dtype pcc = nume / sqrt(s1) / sqrt(s2);			
+
 			rmse = sqrt(rmse / test_idx.size());
 			mae = mae / test_idx.size();
-			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse) << std::endl;
+			std::cerr << fmt::sprintf("test pcc: %.4f\t test rmse: %.4f", pcc, rmse) << std::endl;
+			if (pcc >= best_pcc)
+			{	
+				best_pcc = pcc;		
+				best_rmse = rmse;
+				FILE* test_pred_fid = fopen(fmt::sprintf("%s/best_pred.txt", cfg::save_dir).c_str(), "w");
+				for (size_t i = 0; i < test_idx.size(); ++i)
+					fprintf(test_pred_fid, "%.6f %.6f\n", y_pred[i], y_label[i]);
+            	fclose(test_pred_fid);
+			}			
 		}
 		
 		if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
@@ -160,6 +191,8 @@ inline void MainLoop()
 		gnn.BackPropagation();
 		learner.Update();
 	}
+
+	std::cerr << "pcc: " << best_pcc << " rmse: " << best_rmse << std::endl;
 }
 
 

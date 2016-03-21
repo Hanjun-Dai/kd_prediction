@@ -14,11 +14,14 @@ struct cfg
     static unsigned n_hidden;
     static unsigned batch_size; 
     static unsigned max_epoch; 
-    static unsigned dna_len;
+    static bool max_pool;
+    static int num_nodes;
     static unsigned test_interval; 
     static unsigned report_interval; 
     static unsigned save_interval; 
+    static unsigned window_size;
     static int node_dim;
+    static bool pad;
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
@@ -27,9 +30,13 @@ struct cfg
     static void LoadParams(const int argc, const char** argv)
     {
         for (int i = 1; i < argc; i += 2)
-        {             
-            if (strcmp(argv[i], "-dna_len") == 0)
-                dna_len = atof(argv[i + 1]);
+        {   
+            if (strcmp(argv[i], "-max_pool") == 0)
+                max_pool = (bool)atoi(argv[i + 1]);         
+            if (strcmp(argv[i], "-pad") == 0)
+                pad = (bool)atoi(argv[i + 1]);          
+            if (strcmp(argv[i], "-w") == 0)
+                window_size = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-lr") == 0)
 		        lr = atof(argv[i + 1]);
             if (strcmp(argv[i], "-cur_iter") == 0)
@@ -68,7 +75,19 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 
-        std::cerr << "dna_len = " << dna_len << std::endl;
+        if (pad)
+        {
+            node_dim = 1;
+            for (unsigned i = 0; i < window_size; ++i)
+                node_dim *= 5;
+        }
+        else
+            node_dim = 1 << (2 * window_size);     
+
+        std::cerr << "max_pool = " << max_pool << std::endl;
+        std::cerr << "node_dim = " << node_dim << std::endl;
+        std::cerr << "pad = " << pad << std::endl;
+        std::cerr << "window_size = " << window_size << std::endl;
         std::cerr << "n_hidden = " << n_hidden << std::endl;
 		std::cerr << "max level = " << max_lv << std::endl;
     	std::cerr << "conv size = " << conv_size << std::endl;
@@ -86,19 +105,22 @@ struct cfg
     }
 };
 
+bool cfg::max_pool = false;
+bool cfg::pad = false;
 int cfg::dev_id = 0;
 int cfg::node_dim = 0;
 int cfg::iter = 0;
 int cfg::max_lv = 4;
 int cfg::conv_size = 20;
 int cfg::fp_len = 512;
-unsigned cfg::dna_len = 0;
+int cfg::num_nodes = 0;
 unsigned cfg::n_hidden = 100;
 unsigned cfg::batch_size = 50;
 unsigned cfg::max_epoch = 200;
 unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
+unsigned cfg::window_size = 1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;

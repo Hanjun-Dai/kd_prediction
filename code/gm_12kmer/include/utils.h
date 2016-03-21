@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include "graph_struct.h"
 
 struct Graph
@@ -35,18 +36,41 @@ inline void LoadIndexes(const char* filename, std::vector<int>& idx_list)
 	fclose(fid);
 }
 
+inline int Str2Id(const std::string& st)
+{
+	int id = 0;
+	for (size_t i = 0; i < st.size(); ++i)
+	{
+		int t = 0;
+		switch (st[i])
+		{
+			case 'A':
+				t = 0;
+				break;
+			case 'T':
+				t = 1;
+				break;
+			case 'C':
+				t = 2;
+				break;
+			case 'G':
+				t = 3; 
+				break;
+			default:
+				t = 4;
+				break;
+		}
+		id = id * (4 + cfg::pad) + t;
+	}
+	return id;
+}
+
 inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<Dtype>& labels)
 {
 	graph_data.clear();
 	labels.clear();
 	std::ifstream ff(cfg::string_file);
-	std::map<char, int> chmap;
-	chmap['A'] = 0;
-	chmap['T'] = 1;
-	chmap['C'] = 2;
-	chmap['G'] = 3;
-	cfg::node_dim = 4;
-	
+
 	int num_graph;
 	ff >> num_graph;
 
@@ -56,18 +80,40 @@ inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<Dtype>& la
 	{
 		ff >> l >> st;
 		labels.push_back(l / 1000);
-		int num_nodes = st.size();
-
-		Graph g(num_nodes);
-
-		for (int j = 0; j < num_nodes; ++j)
+		if (cfg::pad)
 		{
-			g.node_label.push_back(chmap[st[j]]);
+			cfg::num_nodes = st.size();
+		}
+		else
+			cfg::num_nodes = st.size() - cfg::window_size + 1;
+
+		Graph g(cfg::num_nodes);
+
+		for (int j = 0; j < (int)cfg::num_nodes; ++j)
+		{
+			std::string buf = "";
+			if (cfg::pad)
+			{				
+				for (int t = j - cfg::window_size / 2; t < j - cfg::window_size / 2 + cfg::window_size; ++t)
+				{
+					if (t < 0)
+						buf = buf + " ";
+					else if (t >= (int)st.size())
+						buf = buf + " ";
+					else
+						buf = buf + st[t];
+				}
+			} else 
+				buf = st.substr(j, cfg::window_size);
+
+			g.node_label.push_back(Str2Id(buf));
+				
 			if (j)
 				g.adj.AddEntry(j, j - 1);
-			if (j < num_nodes - 1)
-				g.adj.AddEntry(j, j + 1);
+			if (j < cfg::num_nodes - 1)
+				g.adj.AddEntry(j, j + 1);	
 		}
+
 		graph_data.push_back(g);
 	}
 }

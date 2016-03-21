@@ -5,16 +5,18 @@ DATA=12mer-kd
 DATA_ROOT=$PWD/../../data/$DATA
 RESULT_ROOT=results/$DATA
 
-tool=kernel_mean_field
+tool=kernel_loopy_bp
 
-LV=1
-dna_len=12
-CONV_SIZE=64
-FP_LEN=64
-n_hidden=64
-bsize=100
-learning_rate=0.005
-max_iter=2000000
+LV=2
+w=1
+pad=0
+max_pool=0
+CONV_SIZE=256
+FP_LEN=256
+n_hidden=96
+bsize=16
+learning_rate=0.001
+max_iter=400000
 cur_iter=0
 dev_id=0
 fold=1
@@ -26,8 +28,10 @@ then
 fi
 
 build/$tool \
+               -max_pool $max_pool \
+               -pad $pad \
+               -w $w \
 	       -string $DATA_ROOT/${DATA}.txt \
-	       -dna_len $dna_len \
                -train_idx $DATA_ROOT/10fold_idx/train_idx-${fold}.txt \
                -test_idx $DATA_ROOT/10fold_idx/test_idx-${fold}.txt \
                -lr $learning_rate \

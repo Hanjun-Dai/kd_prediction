@@ -22,7 +22,7 @@ for fold in 1 2 3 4 5 6 7 8 9 10; do
 
     echo fold $fold >> $log_file
 
-    #python split_train_test.py $data_root/12mer-kd.sparse ../../data/12mer-kd/10fold_idx $output_root $fold
+    python split_train_test.py $data_root/12mer-kd.sparse ../../data/12mer-kd/10fold_idx $output_root $fold
 
     model_file=$output_root/fold-$fold-model
     pred_file=$output_root/fold-$fold-pred
@@ -33,4 +33,4 @@ for fold in 1 2 3 4 5 6 7 8 9 10; do
 
 done
 
-python parse_10fold_results.py $output_root
+#python parse_10fold_results.py $output_root

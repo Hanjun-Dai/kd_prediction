@@ -4,19 +4,30 @@
 void InitModel()
 {
     init_const_dict["n2n"] = &graph;
-	init_const_dict["subgraph_concat"] = &graph;	
-	init_const_dict["max_pool"] = &graph;	
 	const Dtype init_scale = 0.05;
 	
 	auto* n2nsum_param = add_const<Node2NodeMsgParam>(model, "n2n");	
-	auto* subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
-	auto* node_pool_param = add_const<NodeMaxPoolParam>(model, "max_pool");
 	
     auto* w_n2l = add_diff<LinearParam>(model, "input-node-to-latent", cfg::node_dim, cfg::conv_size, 0, init_scale);
     auto* p_node_conv = add_diff<LinearParam>(model, "linear-node-conv", cfg::conv_size, cfg::conv_size, 0, init_scale);
 	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
-	auto* h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::dna_len, cfg::n_hidden, 0, init_scale);
 	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
+
+	IParam<mode, Dtype>* subgconcat_param = nullptr, *node_pool_param = nullptr, *subgsum_param = nullptr, *h1_weight = nullptr;
+	if (cfg::max_pool)
+	{	
+		init_const_dict["subgraph_concat"] = &graph;	
+		init_const_dict["max_pool"] = &graph;	
+
+		subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
+		node_pool_param = add_const<NodeMaxPoolParam>(model, "max_pool");
+		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::num_nodes, cfg::n_hidden, 0, init_scale);
+	} else 
+	{
+		init_const_dict["subgraph_pool"] = &graph;
+		subgsum_param = add_const<SubgraphMsgParam>(model, "subgraph_pool");
+		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
+	}
 
 	ILayer<mode, Dtype>* input_layer = cl<InputLayer>("input", gnn, {});
     auto* input_message = cl<ParamLayer>(gnn, {input_layer}, {w_n2l}); 
@@ -39,8 +50,15 @@ void InitModel()
 	auto* out_linear = cl<ParamLayer>(gnn, {cur_message_layer}, {out_params});		
 	auto* reluact_fp = cl<ReLULayer>(gnn, {out_linear});
 
-	auto* out_pool = cl<ParamLayer>(gnn, {reluact_fp}, {node_pool_param});
-	auto* y_potential = cl<ParamLayer>(gnn, {out_pool}, {subgconcat_param});
+	ILayer<mode, Dtype>* y_potential = nullptr;
+	if (cfg::max_pool)
+	{
+		auto* out_pool = cl<ParamLayer>(gnn, {reluact_fp}, {node_pool_param});
+	    y_potential = cl<ParamLayer>(gnn, {out_pool}, {subgconcat_param});	
+	} else 
+	{
+		y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgsum_param});
+	}
 
 	auto* hidden = cl<ParamLayer>(gnn, {y_potential}, {h1_weight});
 	
