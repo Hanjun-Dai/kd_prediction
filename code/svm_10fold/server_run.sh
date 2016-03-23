@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TOOLS=$HOME/Software/liblinear/2.1
+TOOLS=$HOME/data/Software/liblinear
 
 dataset=yap1
 max_miss=1

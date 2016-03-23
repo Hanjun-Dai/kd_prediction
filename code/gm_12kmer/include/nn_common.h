@@ -159,7 +159,7 @@ inline void MainLoop()
 			{	
 				best_pcc = pcc;		
 				best_rmse = rmse;
-				FILE* test_pred_fid = fopen(fmt::sprintf("%s/best_pred.txt", cfg::save_dir).c_str(), "w");
+				FILE* test_pred_fid = fopen(fmt::sprintf("%s/%s", cfg::save_dir, cfg::result_file).c_str(), "w");
 				for (size_t i = 0; i < test_idx.size(); ++i)
 					fprintf(test_pred_fid, "%.6f %.6f\n", y_pred[i], y_label[i]);
             	fclose(test_pred_fid);

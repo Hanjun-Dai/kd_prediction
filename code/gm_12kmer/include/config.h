@@ -12,9 +12,10 @@ struct cfg
     static int dev_id, iter; 
     static int max_lv, conv_size, fp_len;
     static unsigned n_hidden;
+    static Dtype scale;
     static unsigned batch_size; 
     static unsigned max_epoch; 
-    static bool max_pool;
+    static bool max_pool, global_pool;
     static int num_nodes;
     static unsigned test_interval; 
     static unsigned report_interval; 
@@ -25,12 +26,16 @@ struct cfg
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
-    static const char *train_idx_file, *test_idx_file, *string_file, *save_dir; 
+    static const char *result_file, *train_idx_file, *test_idx_file, *string_file, *save_dir; 
     
     static void LoadParams(const int argc, const char** argv)
     {
         for (int i = 1; i < argc; i += 2)
         {   
+	    if (strcmp(argv[i], "-scale") == 0)
+		scale = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-global_pool") == 0)
+		global_pool = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-max_pool") == 0)
                 max_pool = (bool)atoi(argv[i + 1]);         
             if (strcmp(argv[i], "-pad") == 0)
@@ -63,6 +68,8 @@ struct cfg
     			l2_penalty = atof(argv[i + 1]);
     		if (strcmp(argv[i], "-m") == 0)
     			momentum = atof(argv[i + 1]);	
+     		if (strcmp(argv[i], "-result") == 0)
+    			result_file = argv[i + 1];
     		if (strcmp(argv[i], "-svdir") == 0)
     			save_dir = argv[i + 1];
     		if (strcmp(argv[i], "-string") == 0)
@@ -89,6 +96,7 @@ struct cfg
         std::cerr << "pad = " << pad << std::endl;
         std::cerr << "window_size = " << window_size << std::endl;
         std::cerr << "n_hidden = " << n_hidden << std::endl;
+	std::cerr << "global_pool = " << global_pool << std::endl;
 		std::cerr << "max level = " << max_lv << std::endl;
     	std::cerr << "conv size = " << conv_size << std::endl;
     	std::cerr << "fp len = " << fp_len << std::endl;
@@ -102,9 +110,11 @@ struct cfg
     	std::cerr << "momentum = " << momentum << std::endl;
     	std::cerr << "init iter = " << iter << std::endl;	
         std::cerr << "device id = " << dev_id << std::endl;    
+	std::cerr << "scale = " << scale << std::endl;
     }
 };
 
+bool cfg::global_pool = false;
 bool cfg::max_pool = false;
 bool cfg::pad = false;
 int cfg::dev_id = 0;
@@ -124,9 +134,11 @@ unsigned cfg::window_size = 1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
+Dtype cfg::scale = 1;
 const char* cfg::train_idx_file = nullptr;
 const char* cfg::test_idx_file = nullptr;
 const char* cfg::string_file = nullptr;
+const char* cfg::result_file = nullptr;
 const char* cfg::save_dir = "./saved";
 
 #endif

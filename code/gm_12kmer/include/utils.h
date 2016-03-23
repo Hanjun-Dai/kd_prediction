@@ -79,7 +79,7 @@ inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<Dtype>& la
 	for (int i = 0; i < num_graph; ++i)
 	{
 		ff >> l >> st;
-		labels.push_back(l / 1000);
+		labels.push_back(l * cfg::scale);
 		if (cfg::pad)
 		{
 			cfg::num_nodes = st.size();

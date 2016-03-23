@@ -19,19 +19,21 @@ void InitModel()
 		
 	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
 
-	IParam<mode, Dtype>* subgconcat_param = nullptr, *node_pool_param = nullptr, *subgsum_param = nullptr, *h1_weight = nullptr;
+	IParam<mode, Dtype> *node_pool_param = nullptr, *subg_param = nullptr, *h1_weight = nullptr;
 	if (cfg::max_pool)
 	{	
-		init_const_dict["subgraph_concat"] = &graph;	
 		init_const_dict["max_pool"] = &graph;	
-		subgconcat_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
 		node_pool_param = add_const<NodeMaxPoolParam>(model, "max_pool");
-		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::num_nodes, cfg::n_hidden, 0, init_scale);
-	} else 
+	}
+	if (cfg::global_pool)
 	{
 		init_const_dict["subgraph_pool"] = &graph;
-		subgsum_param = add_const<SubgraphMsgParam>(model, "subgraph_pool");
+		subg_param = add_const<SubgraphMsgParam>(model, "subgraph_pool");
 		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len, cfg::n_hidden, 0, init_scale);
+	} else {
+		init_const_dict["subgraph_concat"] = &graph;	
+		subg_param = add_const<SubgraphConcatParam>(model, "subgraph_concat");
+		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::num_nodes, cfg::n_hidden, 0, init_scale);
 	}
 
    	auto* node_input = cl<InputLayer>("input", gnn, {});
@@ -62,10 +64,10 @@ void InitModel()
 	if (cfg::max_pool)
 	{
 		auto* out_pool = cl<ParamLayer>(gnn, {reluact_fp}, {node_pool_param});
-	    y_potential = cl<ParamLayer>(gnn, {out_pool}, {subgconcat_param});	
+	    y_potential = cl<ParamLayer>(gnn, {out_pool}, {subg_param});	
 	} else 
 	{
-		y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subgsum_param});
+		y_potential = cl<ParamLayer>(gnn, {reluact_fp}, {subg_param});
 	}
 
 	auto* hidden = cl<ParamLayer>(gnn, {y_potential}, {h1_weight});
