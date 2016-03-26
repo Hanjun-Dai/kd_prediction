@@ -106,7 +106,7 @@ inline void MainLoop()
 	if (init_iter > 0)
 	{
 		std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
-		//gnn.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
+		model.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
 	}
 
 	Dtype* y_label = new Dtype[test_idx.size()];
@@ -169,7 +169,7 @@ inline void MainLoop()
 		if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
 		{			
 			printf("saving model for iter=%d\n", cfg::iter);			
-			//gnn.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
+			model.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
 		}
 		
 		if (cur_pos + cfg::batch_size > train_idx.size())

@@ -5,7 +5,7 @@ max_miss=1
 max_shift=1
 max_degree=7
 
-output_root=$HOME/scratch/data/dataset/kd_prediction/$dataset/sft-$max_shift-mis-$max_miss-deg-$max_degree
+output_root=$HOME/scratch/data/dataset/kd_prediction_svm/$dataset/sft-$max_shift-mis-$max_miss-deg-$max_degree
 
 if [ ! -e $output_root ];
 then

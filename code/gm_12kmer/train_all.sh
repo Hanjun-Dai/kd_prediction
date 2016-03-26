@@ -1,28 +1,28 @@
 #!/bin/bash
 
-DATA=12mer-kd
+DATA=$1
 
 DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=results/$DATA
+RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn_all/$DATA
 
 tool=kernel_loopy_bp
 
 LV=2
-scale=0.001
 w=2
 pad=0
 max_pool=1
 global_pool=1
 CONV_SIZE=128
 FP_LEN=128
-n_hidden=96
-bsize=32
+bsize=64
 learning_rate=0.001
-max_iter=10000
-cur_iter=1000
+n_hidden=96
+scale=0.001
+max_iter=400000
+cur_iter=0
 dev_id=0
-fold=1
-save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-fold-$fold
+int_save=10000
+save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
 
 if [ ! -e $save_dir ];
 then
@@ -37,16 +37,14 @@ build/$tool \
                -pad $pad \
                -w $w \
 	       -string $DATA_ROOT/${DATA}.txt \
-               -train_idx $DATA_ROOT/10fold_idx/train_idx-${fold}.txt \
-               -test_idx $DATA_ROOT/10fold_idx/test_idx-${fold}.txt \
                -lr $learning_rate \
                -device $dev_id \
                -maxe $max_iter \
                -svdir $save_dir \
                -hidden $n_hidden \
-               -int_test 1000 \
+	       -int_save $int_save \
+               -int_test $int_save \
                -int_report 100 \
-	       -int_save 1000 \
                -l2 0.00 \
                -m 0.9 \
                -lv $LV \

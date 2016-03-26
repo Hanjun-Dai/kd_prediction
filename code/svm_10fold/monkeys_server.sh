@@ -2,11 +2,11 @@
 
 TOOLS=$HOME/data/Software/liblinear
 
-dataset=yap1
-max_miss=1
-max_shift=1
-max_degree=3
-c=1.0
+dataset=$1
+max_miss=$2
+max_shift=$3
+max_degree=$4
+c=$5
 
 data_root=$HOME/scratch/data/dataset/kd_prediction_svm/$dataset/sft-$max_shift-mis-$max_miss-deg-$max_degree
 if [ ! -e $data_root ];

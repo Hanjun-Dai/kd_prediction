@@ -23,8 +23,18 @@ struct Graph
 	std::vector<int> node_label; 
 };
 
-inline void LoadIndexes(const char* filename, std::vector<int>& idx_list)
+inline void LoadIndexes(const char* filename, std::vector<int>& idx_list, size_t num_samples)
 {
+	if (filename == nullptr)
+	{
+		std::cerr << num_samples << std::endl;
+		std::cerr << "loading all" << std::endl;
+		idx_list.resize(num_samples);
+		for (size_t i = 0; i < idx_list.size(); ++i)
+			idx_list[i] = i;
+		std::random_shuffle(idx_list.begin(), idx_list.end());
+		return;
+	}
     std::cerr << "loading indexes " << filename << std::endl;
 	idx_list.clear();
 	FILE* fid = fopen(filename, "r");

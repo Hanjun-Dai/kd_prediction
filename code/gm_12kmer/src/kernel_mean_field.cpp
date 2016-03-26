@@ -79,9 +79,9 @@ int main(int argc, const char** argv)
 
 	GPUHandle::Init(cfg::dev_id);	
 
-	LoadIndexes(cfg::train_idx_file, train_idx);
-	LoadIndexes(cfg::test_idx_file, test_idx);
 	LoadRawData(graph_data, labels);
+	LoadIndexes(cfg::train_idx_file, train_idx, labels.size());
+	LoadIndexes(cfg::test_idx_file, test_idx, labels.size());
 
 	InitModel();
 
