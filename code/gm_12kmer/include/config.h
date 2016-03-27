@@ -9,6 +9,7 @@ typedef float Dtype;
 
 struct cfg
 {
+    static bool evaluate;
     static int dev_id, iter; 
     static int max_lv, conv_size, fp_len;
     static unsigned n_hidden;
@@ -32,10 +33,12 @@ struct cfg
     {
         for (int i = 1; i < argc; i += 2)
         {   
-	    if (strcmp(argv[i], "-scale") == 0)
-		scale = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-scale") == 0)
+                scale = atof(argv[i + 1]);
             if (strcmp(argv[i], "-global_pool") == 0)
-		global_pool = (bool)atoi(argv[i + 1]);
+                global_pool = (bool)atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-eval") == 0)
+                evaluate = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-max_pool") == 0)
                 max_pool = (bool)atoi(argv[i + 1]);         
             if (strcmp(argv[i], "-pad") == 0)
@@ -96,7 +99,7 @@ struct cfg
         std::cerr << "pad = " << pad << std::endl;
         std::cerr << "window_size = " << window_size << std::endl;
         std::cerr << "n_hidden = " << n_hidden << std::endl;
-	std::cerr << "global_pool = " << global_pool << std::endl;
+        std::cerr << "global_pool = " << global_pool << std::endl;
 		std::cerr << "max level = " << max_lv << std::endl;
     	std::cerr << "conv size = " << conv_size << std::endl;
     	std::cerr << "fp len = " << fp_len << std::endl;
@@ -117,6 +120,7 @@ struct cfg
 bool cfg::global_pool = false;
 bool cfg::max_pool = false;
 bool cfg::pad = false;
+bool cfg::evaluate = false;
 int cfg::dev_id = 0;
 int cfg::node_dim = 0;
 int cfg::iter = 0;

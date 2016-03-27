@@ -26,7 +26,7 @@ inline void LoadRaw(std::vector<DNA>& data_list)
 		DNA cur_sample;
 
 		ff >> cur_sample.kd >> cur_sample.seq;
-
+                cur_sample.kd *= cfg::scale;
 		data_list.push_back(cur_sample);
 		DNA::len = cur_sample.seq.size();
 	}

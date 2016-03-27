@@ -1,4 +1,4 @@
-GNN_HOME=$(HOME)/data/Workspace/cpp/graphnn
+GNN_HOME=$(HOME)/Workspace/cpp/graphnn
 
 include $(GNN_HOME)/make_common
 

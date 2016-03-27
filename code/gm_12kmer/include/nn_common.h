@@ -98,6 +98,67 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 inline void MainLoop()
 {
 	DenseMat<CPU, Dtype> output_buf;
+	if (cfg::evaluate)
+	{
+		std::cerr << fmt::sprintf("loading model %d for evaluation", cfg::iter) << std::endl;
+		model.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));	
+
+		graph.Resize(1, cfg::num_nodes);
+		for (int j = 0; j < cfg::num_nodes; ++j)
+		{
+			graph.AddNode(0, j);
+		}
+		
+		int cur_edge = 0;
+		for (int j = 0; j < cfg::num_nodes; ++j)
+		{
+			if (j)
+			{
+				graph.AddEdge(cur_edge, j, j-1);
+				cur_edge++;
+			}
+			if (j < cfg::num_nodes - 1)
+			{
+				graph.AddEdge(cur_edge, j, j + 1);
+				cur_edge++;
+			}
+		}
+		assert(cfg::pad == 0);		
+		assert(cfg::window_size == 2);
+		model.SetupConstParams(init_const_dict); 
+		std::cerr << "evaluating..." << std::endl;
+
+		FILE* fid = fopen(fmt::sprintf("%s/seq_logo_mat.txt", cfg::save_dir).c_str(), "w");
+		for (int j = 0; j < 4; ++j)
+		{
+			Dtype s = 0.0;						
+			for (int i = 0; i < cfg::num_nodes; ++i)
+			{		
+				s = 0.0;
+				for (int k = 0; k < 4; ++k)
+				{
+					input.Zeros(cfg::num_nodes, cfg::node_dim);	
+					input.data[i * cfg::node_dim + j * 4 + k] = 1.0;	
+					gnn.ForwardData({{"input", &input}}, TEST);
+			    	gnn.GetState("output", output_buf);	
+			    	s += output_buf.data[0];
+				}							
+			    fprintf(fid, "%.6f ", s); 
+			}
+			s = 0;
+			for (int k = 0; k < 4; ++k)
+			{
+				input.Zeros(cfg::num_nodes, cfg::node_dim);	
+				input.data[(cfg::num_nodes - 1) * cfg::node_dim + k * 4 + j] = 1.0;	
+				gnn.ForwardData({{"input", &input}}, TEST);
+			   	gnn.GetState("output", output_buf);	
+			   	s += output_buf.data[0];
+			}
+			fprintf(fid, "%.6f\n", s);
+		}
+		std::cerr << "done." << std::endl;
+		return;
+	}	
 
 	MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	int max_iter = (long long)cfg::max_epoch; // * (long long)train_idx.size() / cfg::batch_size;

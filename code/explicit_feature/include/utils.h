@@ -22,6 +22,7 @@ struct cfg
 	static int max_missmatch;
 	static int max_shift;
 	static int max_degree;
+	static double scale;
 	static const char* data_file;
 	static const char* out_feat;
 
@@ -39,6 +40,8 @@ struct cfg
     				dict_files.push_back("");
     			dict_files[d] = argv[i + 1];
     		}
+    		if (strcmp(argv[i], "-scale") == 0)
+    		        scale = atof(argv[i + 1]); 
         	if (strcmp(argv[i], "-max_miss") == 0)
             	max_missmatch = atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-max_shift") == 0)
@@ -69,6 +72,7 @@ std::vector<std::string> cfg::dict_files;
 int cfg::max_missmatch = 0;
 int cfg::max_shift = 0;
 int cfg::max_degree = 0;
+double cfg::scale = 1;
 const char* cfg::data_file = nullptr;
 const char* cfg::out_feat = nullptr;
 
