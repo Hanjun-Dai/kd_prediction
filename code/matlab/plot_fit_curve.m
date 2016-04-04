@@ -1,21 +1,31 @@
 fold = 1;
 scale=1;
 
-pred_file = sprintf('/home/kangaroo/Research/kd_prediction/code/svm_10fold/results/kd_prediction_svm/ace2/c-10.0-sft-1-mis-1-deg-6/fold-%d-pred', fold);
+result_root = sprintf('%s/scratch/results/kd_prediction_gnn/12mer-kd/kernel_loopy_bp-lv-2-w-2-pad-0-mx-1-gp-1-conv-256-fp-256-bsize-32-lr-0.001', getenv('HOME'));
 
-fid = fopen(pred_file, 'r');
-pred = fscanf(fid, '%f');
-fclose(fid);
+s = 0;
+for fold = 1 : 10
+    result_file = sprintf('%s/best_pred-fold-%d.txt', result_root, fold);
+    fid = fopen(result_file, 'r');
+    a = fscanf(fid, '%f');
+    fclose(fid);    
+    pred = a(1 : 2 : end);
+    label = a(2 : 2 : end);
+    s = s + corr(pred, label, 'type', 'Spearman');
+end
+s / 10
+%%
 
-label_file = '/home/kangaroo/Research/kd_prediction/data/ace2/labels.txt';
-fid = fopen(label_file, 'r');
-labels = fscanf(fid, '%f');
-fclose(fid);
+%scatter_fit_goodness(pred, label, 'title', 'kd value prediction on 12-mer data', 'xlabel', 'prediction', 'ylabel', 'label');
+%set(gcf, 'PaperPositionMode', 'auto', 'PaperSize', [7, 6]);
+%print('-dpdf', '12mer-scatter.pdf');
 
-idx_file = sprintf('/home/kangaroo/Research/kd_prediction/data/ace2/10fold_idx/test_idx-%d.txt', fold);
-fid = fopen(idx_file, 'r');
-idx = fscanf(fid, '%d');
-fclose(fid);
+% dscatter(pred, label);
+% xlabel('prediction', 'FontSize',16,'FontName','Times New Roman');
+% ylabel('label', 'FontSize',16,'FontName','Times New Roman');
+% print('-dpdf', '12mer-density.pdf');
 
-y = labels(idx + 1) * scale;
-scatter_fit_goodness(pred, y);
+dscatter(pred, label, 'PLOTTYPE', 'contour');
+xlabel('prediction', 'FontSize',16,'FontName','Times New Roman');
+ylabel('label', 'FontSize',16,'FontName','Times New Roman');
+print('-dpdf', '12mer-contour.pdf');
