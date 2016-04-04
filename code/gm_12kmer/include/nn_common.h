@@ -95,71 +95,104 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 	label.CopyFrom(y_cpu);
 }
 
-inline void MainLoop()
+bool cmp(const std::pair<std::string, Dtype>& i, const std::pair<std::string, Dtype>& j)
 {
+	return (cfg::rev_order ? i.second > j.second : i.second < j.second); 
+}
+
+void ExploreKmers()
+{	
 	DenseMat<CPU, Dtype> output_buf;
+	assert(cfg::pad == false);
+	cfg::num_nodes = cfg::kmer - cfg::window_size + 1;	
+	int* array = new int[cfg::kmer];
+
+	std::map<int, char> chmap;
+	chmap[0] = 'A';
+	chmap[1] = 'T';
+	chmap[2] = 'C';
+	chmap[3] = 'G';
+	std::vector< std::pair<std::string, Dtype> > results;
+
+	for (int t_mask = 0; t_mask < (1 << (2 * cfg::kmer)); ++t_mask)
+	{		
+		int mask = t_mask;
+		for (int i = 0; i < cfg::kmer; ++i)
+		{			
+			array[cfg::kmer - i - 1] = mask & 3;
+			mask /= 4;
+		}
+		std::string st = "";
+		for (int i = 0; i < cfg::kmer; ++i)
+			st += chmap[array[i]];
+
+		Graph* g = new Graph(cfg::num_nodes);
+		for (int j = 0; j < (int)cfg::num_nodes; ++j)
+		{			
+			int id = 0;	
+			for (int i = 0; i < cfg::window_size; ++i)
+			{
+				id = id * 4 + array[j + i]; 
+			}
+
+			g->node_label.push_back(id);
+					
+			if (j)
+				g->adj.AddEntry(j, j - 1);
+			if (j < cfg::num_nodes - 1)
+				g->adj.AddEntry(j, j + 1);	
+		}
+
+		graph.Resize(1, g->num_nodes);
+		input.Zeros(g->num_nodes, cfg::node_dim);
+		Dtype* ptr = input.data;
+		for (int j = 0; j < g->num_nodes; ++j)
+		{
+			ptr[g->node_label[j]] = 1.0;
+			ptr += cfg::node_dim;
+			graph.AddNode(0, j);
+		}
+		
+		// add edges, parsing edge features
+		int x, y, cur_edge = 0;
+		for (int j = 0; j < g->num_nodes; ++j)
+		{
+			x = j;
+			for (size_t k = 0; k < g->adj.head[j].size(); ++k)
+			{
+				y = g->adj.head[j][k];
+				graph.AddEdge(cur_edge, x, y);	
+				cur_edge++;
+			}
+		}
+		delete g;
+		model.SetupConstParams(init_const_dict); 
+		gnn.ForwardData({{"input", &input}}, TEST);
+		gnn.GetState("output", output_buf);	
+		results.push_back(std::make_pair(st, output_buf.data[0]));
+	}
+
+	std::sort(results.begin(), results.end(), cmp);
+	FILE* fid = fopen(fmt::sprintf("%s/%d-mer-kd.txt", cfg::save_dir, cfg::kmer).c_str(), "w");
+	for (size_t i = 0; i < results.size(); ++i)
+		fprintf(fid, "%s %.6f\n", results[i].first.c_str(), results[i].second);
+	fclose(fid);
+	std::cerr << "done." << std::endl;
+}
+
+inline void MainLoop()
+{	
 	if (cfg::evaluate)
 	{
 		std::cerr << fmt::sprintf("loading model %d for evaluation", cfg::iter) << std::endl;
 		model.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));	
 
-		graph.Resize(1, cfg::num_nodes);
-		for (int j = 0; j < cfg::num_nodes; ++j)
-		{
-			graph.AddNode(0, j);
-		}
+		ExploreKmers();
 		
-		int cur_edge = 0;
-		for (int j = 0; j < cfg::num_nodes; ++j)
-		{
-			if (j)
-			{
-				graph.AddEdge(cur_edge, j, j-1);
-				cur_edge++;
-			}
-			if (j < cfg::num_nodes - 1)
-			{
-				graph.AddEdge(cur_edge, j, j + 1);
-				cur_edge++;
-			}
-		}
-		assert(cfg::pad == 0);		
-		assert(cfg::window_size == 2);
-		model.SetupConstParams(init_const_dict); 
-		std::cerr << "evaluating..." << std::endl;
-
-		FILE* fid = fopen(fmt::sprintf("%s/seq_logo_mat.txt", cfg::save_dir).c_str(), "w");
-		for (int j = 0; j < 4; ++j)
-		{
-			Dtype s = 0.0;						
-			for (int i = 0; i < cfg::num_nodes; ++i)
-			{		
-				s = 0.0;
-				for (int k = 0; k < 4; ++k)
-				{
-					input.Zeros(cfg::num_nodes, cfg::node_dim);	
-					input.data[i * cfg::node_dim + j * 4 + k] = 1.0;	
-					gnn.ForwardData({{"input", &input}}, TEST);
-			    	gnn.GetState("output", output_buf);	
-			    	s += output_buf.data[0];
-				}							
-			    fprintf(fid, "%.6f ", s); 
-			}
-			s = 0;
-			for (int k = 0; k < 4; ++k)
-			{
-				input.Zeros(cfg::num_nodes, cfg::node_dim);	
-				input.data[(cfg::num_nodes - 1) * cfg::node_dim + k * 4 + j] = 1.0;	
-				gnn.ForwardData({{"input", &input}}, TEST);
-			   	gnn.GetState("output", output_buf);	
-			   	s += output_buf.data[0];
-			}
-			fprintf(fid, "%.6f\n", s);
-		}
-		std::cerr << "done." << std::endl;
 		return;
 	}	
 
+	DenseMat<CPU, Dtype> output_buf;
 	MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	int max_iter = (long long)cfg::max_epoch; // * (long long)train_idx.size() / cfg::batch_size;
 	unsigned cur_pos = 0;

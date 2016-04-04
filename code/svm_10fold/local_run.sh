@@ -4,9 +4,9 @@ TOOLS=$HOME/Software/liblinear/2.1
 
 dataset=ace2
 max_miss=1
-max_shift=1
+max_shift=2
 max_degree=6
-c=10.0
+c=1.0
 
 data_root=$HOME/scratch/data/dataset/kd_prediction_svm/$dataset/sft-$max_shift-mis-$max_miss-deg-$max_degree
 if [ ! -e $data_root ];

@@ -9,9 +9,9 @@ typedef float Dtype;
 
 struct cfg
 {
-    static bool evaluate;
+    static bool evaluate, rev_order;
     static int dev_id, iter; 
-    static int max_lv, conv_size, fp_len;
+    static int max_lv, conv_size, fp_len, kmer;
     static unsigned n_hidden;
     static Dtype scale;
     static unsigned batch_size; 
@@ -21,7 +21,7 @@ struct cfg
     static unsigned test_interval; 
     static unsigned report_interval; 
     static unsigned save_interval; 
-    static unsigned window_size;
+    static int window_size;
     static int node_dim;
     static bool pad;
     static Dtype lr;
@@ -33,10 +33,14 @@ struct cfg
     {
         for (int i = 1; i < argc; i += 2)
         {   
+            if (strcmp(argv[i], "-kmer") == 0)
+                kmer = atoi(argv[i + 1]);
             if (strcmp(argv[i], "-scale") == 0)
                 scale = atof(argv[i + 1]);
             if (strcmp(argv[i], "-global_pool") == 0)
                 global_pool = (bool)atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-rev_order") == 0)
+                rev_order = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-eval") == 0)
                 evaluate = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-max_pool") == 0)
@@ -88,7 +92,7 @@ struct cfg
         if (pad)
         {
             node_dim = 1;
-            for (unsigned i = 0; i < window_size; ++i)
+            for (int i = 0; i < window_size; ++i)
                 node_dim *= 5;
         }
         else
@@ -119,12 +123,14 @@ struct cfg
 
 bool cfg::global_pool = false;
 bool cfg::max_pool = false;
+bool cfg::rev_order = false;
 bool cfg::pad = false;
 bool cfg::evaluate = false;
 int cfg::dev_id = 0;
 int cfg::node_dim = 0;
 int cfg::iter = 0;
 int cfg::max_lv = 4;
+int cfg::kmer = 3;
 int cfg::conv_size = 20;
 int cfg::fp_len = 512;
 int cfg::num_nodes = 0;
@@ -134,7 +140,7 @@ unsigned cfg::max_epoch = 200;
 unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
-unsigned cfg::window_size = 1;
+int cfg::window_size = 1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;

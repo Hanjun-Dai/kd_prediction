@@ -30,6 +30,8 @@ then
 fi
 
 build/$tool \
+               -rev_order 1 \
+               -kmer 7 \
                -eval 1 \
 	       -global_pool $global_pool \
 	       -scale $scale \
