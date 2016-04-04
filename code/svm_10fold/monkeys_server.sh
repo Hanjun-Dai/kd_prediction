@@ -15,6 +15,7 @@ then
 fi
 
 ../explicit_feature/build/feat_export -data_file ../../data/$dataset/$dataset.txt \
+		    -scale 10.0 \
                     -out_feat $data_root/$dataset.sparse \
                     -max_miss $max_miss \
                     -max_shift $max_shift \
