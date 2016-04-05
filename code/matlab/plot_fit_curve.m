@@ -15,17 +15,18 @@ for fold = 1 : 10
 end
 s / 10
 %%
-
-%scatter_fit_goodness(pred, label, 'title', 'kd value prediction on 12-mer data', 'xlabel', 'prediction', 'ylabel', 'label');
-%set(gcf, 'PaperPositionMode', 'auto', 'PaperSize', [7, 6]);
-%print('-dpdf', '12mer-scatter.pdf');
+pred = pred * 1000;
+label = label * 1000;
+scatter_fit_goodness(pred, label, 'title', '', 'xlabel', 'Predicted Kd', 'ylabel', 'True Kd');
+set(gcf, 'PaperPositionMode', 'auto', 'PaperSize', [7, 6]);
+print('-dpdf', '12mer-scatter.pdf');
 
 % dscatter(pred, label);
 % xlabel('prediction', 'FontSize',16,'FontName','Times New Roman');
 % ylabel('label', 'FontSize',16,'FontName','Times New Roman');
 % print('-dpdf', '12mer-density.pdf');
 
-dscatter(pred, label, 'PLOTTYPE', 'contour');
-xlabel('prediction', 'FontSize',16,'FontName','Times New Roman');
-ylabel('label', 'FontSize',16,'FontName','Times New Roman');
-print('-dpdf', '12mer-contour.pdf');
+% dscatter(pred, label, 'PLOTTYPE', 'contour');
+% xlabel('prediction', 'FontSize',16,'FontName','Times New Roman');
+% ylabel('label', 'FontSize',16,'FontName','Times New Roman');
+% print('-dpdf', '12mer-contour.pdf');
