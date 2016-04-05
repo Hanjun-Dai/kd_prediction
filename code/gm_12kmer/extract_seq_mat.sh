@@ -31,7 +31,7 @@ RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn_all/$DATA
 
 save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
 
-for k in 7 8; do
+for k in 10; do
 
 build/$tool \
                -rev_order 1 \
