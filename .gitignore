@@ -1,5 +1,7 @@
 *.png
 .ipynb_checkpoints/
+**/kmer_28set
+*.zip
 tmp/
 *~
 ~*

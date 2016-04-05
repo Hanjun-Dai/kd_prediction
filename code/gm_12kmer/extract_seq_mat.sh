@@ -1,10 +1,5 @@
 #!/bin/bash
 
-DATA=$1
-
-DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn_all/$DATA
-
 tool=kernel_loopy_bp
 
 LV=2
@@ -19,19 +14,28 @@ learning_rate=0.001
 n_hidden=96
 scale=0.001
 max_iter=400000
-cur_iter=400000
+cur_iter=100000
 dev_id=0
 int_save=10000
+
+out_dir=kmer_28set
+
+if [ ! -e $out_dir ]; then
+    mkdir $out_dir
+fi
+
+for DATA in ace2 aft1 aft2 bas1 cad1 cbf1 cin5 cup9 dal80 gat1 gcn4 mata2 mcm1 met31 met32 msn1 msn2 nrg2 pdr3 pho4 reb1 rox1 rpn4 sko1 stb5 yap1 yap3 yap7; do
+
+DATA_ROOT=$PWD/../../data/$DATA
+RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn_all/$DATA
+
 save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
 
-if [ ! -e $save_dir ];
-then
-    mkdir -p $save_dir
-fi
+for k in 7 8; do
 
 build/$tool \
                -rev_order 1 \
-               -kmer 8 \
+               -kmer $k \
                -eval 1 \
 	       -global_pool $global_pool \
 	       -scale $scale \
@@ -49,3 +53,9 @@ build/$tool \
                -fp $FP_LEN \
                -cur_iter $cur_iter \
                2>&1 | tee $save_dir/log-$fold.txt 
+
+mv $save_dir/$k-mer-kd.txt $out_dir/$DATA-$k-mer.txt
+
+done
+
+done
