@@ -19,7 +19,7 @@ learning_rate=0.001
 n_hidden=96
 scale=0.001
 max_iter=400000
-cur_iter=100000
+cur_iter=400000
 dev_id=0
 int_save=10000
 save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
@@ -30,7 +30,7 @@ then
 fi
 
 build/$tool \
-               -rev_order 1 \
+               -rev_order 0 \
                -kmer 7 \
                -eval 1 \
 	       -global_pool $global_pool \

@@ -1,9 +1,9 @@
 clear;
 clc;
 
-dataset = 'gcn4';
-degree = 8;
-top = 10;
+dataset = '12mer-kd';
+degree = 7;
+top = 20;
 folder = sprintf('/home/kangaroo/scratch/results/kd_prediction_gnn_all/%s/kernel_loopy_bp-lv-2-w-2-pad-0-mx-1-gp-1-conv-128-fp-128-bsize-64-lr-0.001', dataset);
 
 fid = fopen(sprintf('%s/%d-mer-kd.txt', folder, degree), 'r');
@@ -40,7 +40,7 @@ f = zeros(4, len);
 for i = 1 : length(patterns)
     for j = 1 : len
         row = d(patterns{i}(j));
-        f(row, j) = f(row, j) + values(i);
+        f(row, j) = f(row, j) + 1;
     end
 end
 s = sum(f, 1);
