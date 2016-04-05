@@ -2,6 +2,10 @@
 .ipynb_checkpoints/
 **/kmer_28set
 *.zip
+kmer_result/
+*.fasta
+logo_options
+*.out
 tmp/
 *~
 ~*
@@ -22,4 +26,4 @@ saved/
 *.blg
 *.bbl
 *.aux
-**/logo/12mer-kd
+temp_logo.eps

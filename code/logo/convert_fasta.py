@@ -13,5 +13,5 @@ if __name__ == '__main__':
             if cnt > top:
                 break
             fid.write('>a%d\n' % cnt)
-            fid.write(line.strip() + '\n')
+            fid.write(line.strip().split(' ')[0] + '\n')
     fid.close()

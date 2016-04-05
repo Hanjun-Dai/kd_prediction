@@ -175,7 +175,7 @@ void ExploreKmers()
 	std::sort(results.begin(), results.end(), cmp);
 	FILE* fid = fopen(fmt::sprintf("%s/%d-mer-kd.txt", cfg::save_dir, cfg::kmer).c_str(), "w");
 	for (size_t i = 0; i < results.size(); ++i)
-		fprintf(fid, "%s\n", results[i].first.c_str());
+		fprintf(fid, "%s %.6f\n", results[i].first.c_str(), results[i].second);
 	fclose(fid);
 	std::cerr << "done." << std::endl;
 }
