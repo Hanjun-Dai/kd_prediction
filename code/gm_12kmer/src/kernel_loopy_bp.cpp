@@ -36,7 +36,8 @@ void InitModel()
 		h1_weight = add_diff<LinearParam>(model, "h1_weight", cfg::fp_len * cfg::num_nodes, cfg::n_hidden, 0, init_scale);
 	}
 
-   	auto* node_input = cl<InputLayer>("input", gnn, {});
+   	ILayer<mode, Dtype>* node_input = cl<InputLayer>("data", gnn, {});
+	auto* label_layer = cl<InputLayer>("label", gnn, {});
     auto* input_node_linear = cl<ParamLayer>(gnn, {node_input}, {w_n2l}); 
     auto* input_message = cl<ParamLayer>(gnn, {input_node_linear}, {n2esum_param});
     auto* input_potential_layer = cl<ReLULayer>(gnn, {input_message});
@@ -76,8 +77,8 @@ void InitModel()
 	
 	auto* output = cl<ParamLayer>("output", gnn, {reluact_out_nn}, {h2_weight});
 	
-	cl<MSECriterionLayer>("mse", gnn, {output});	
-	cl<ABSCriterionLayer>("mae", gnn, {output}, PropErr::N);
+	cl<MSECriterionLayer>("mse", gnn, {output, label_layer});	
+	cl<ABSCriterionLayer>("mae", gnn, {output, label_layer}, PropErr::N);
 }
 
 int main(int argc, const char** argv)

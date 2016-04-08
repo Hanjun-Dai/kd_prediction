@@ -167,7 +167,7 @@ void ExploreKmers()
 		}
 		delete g;
 		model.SetupConstParams(init_const_dict); 
-		gnn.ForwardData({{"input", &input}}, TEST);
+		gnn.FeedForward({{"data", &input}}, TEST);
 		gnn.GetState("output", output_buf);	
 		results.push_back(std::make_pair(st, output_buf.data[0]));
 	}
@@ -217,7 +217,7 @@ inline void MainLoop()
 			{
 				GetBatch(test_idx, i, cfg::batch_size);
 				model.SetupConstParams(init_const_dict); 
-				gnn.ForwardData({{"input", &input}}, TEST);
+				gnn.FeedForward({{"data", &input}, {"label", &label}}, TEST);
 			    gnn.GetState("output", output_buf);
                 auto& ground_truth = y_cpu;
                 for (unsigned j = 0; j < ground_truth.rows; ++j)
@@ -225,7 +225,7 @@ inline void MainLoop()
                 	y_label[i + j] = ground_truth.data[j];
                 	y_pred[i + j] = output_buf.data[j];
                 }
-				auto loss_map = gnn.ForwardLabel({{"mse", &label}, {"mae", &label}});
+				auto loss_map = gnn.GetLoss();
 				rmse += loss_map["mse"];
 				mae += loss_map["mae"];
 			}
@@ -274,8 +274,8 @@ inline void MainLoop()
 	
 		GetBatch(train_idx, cur_pos, cfg::batch_size);
 		model.SetupConstParams(init_const_dict); 
-		gnn.ForwardData({{"input", &input}}, TRAIN);
-		auto loss_map = gnn.ForwardLabel({{"mse", &label}, {"mae", &label}});
+		gnn.FeedForward({{"data", &input}, {"label", &label}}, TRAIN);
+		auto loss_map = gnn.GetLoss();
 
     	if (cfg::iter % cfg::report_interval == 0)
 		{
