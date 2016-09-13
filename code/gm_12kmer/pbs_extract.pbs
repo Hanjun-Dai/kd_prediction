@@ -1,7 +1,7 @@
 #!/bin/bash
-#PBS -N dna
-#PBS -q monkeys_gpu
-#PBS -l walltime=14:00:00
+#PBS -N extract
+#PBS -q monkeys
+#PBS -l walltime=12:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -l mem=2gb
 #PBS -k oe
@@ -15,6 +15,6 @@ Working directory: ${PWD}
 ==================================================
 "
 
-cd /nv/hcoc1/hdai8/data/Research/kd_prediction/code/fisher
+cd /nv/hcoc1/hdai8/data/Research/kd_prediction/code/gm_12kmer
 
-./monkeys_server.sh $hidden $data $fold
+./extract_seq_mat.sh $data 

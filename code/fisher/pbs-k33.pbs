@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -N dna
-#PBS -q monkeys_gpu
+#PBS -q monkeys-k33
 #PBS -l walltime=14:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -l mem=2gb

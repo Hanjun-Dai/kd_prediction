@@ -59,4 +59,3 @@ mv $save_dir/$k-mer-kd.txt $out_dir/$DATA-$k-mer.txt
 
 done
 
-done
