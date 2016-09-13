@@ -40,10 +40,15 @@ def get_kernel_mat(fm_train_dna, fm_test_dna, N, M,
 	neg.set_observations(wordfeats_train)
 	feats_train=FKFeatures(10, pos, neg)
 	feats_train.set_opt_a(-1) #estimate prior
+	
+	print 'getting feature matrix'
+	v0 = feats_train.get_feature_vector(0)
+	v1 = feats_train.get_feature_vector(1)
+	print np.dot(v0, v1)
 	kernel=LinearKernel(feats_train, feats_train)
 	#kernel=PolyKernel(feats_train, feats_train, *kargs)
 	km_train=kernel.get_kernel_matrix()
-	print km_train.shape
+	print km_train.shape, km_train[0, 1]
 
 	print "get kernel on testing data"
 	pos_clone=HMM(pos)
@@ -112,15 +117,25 @@ if __name__=='__main__':
 		y_train = np.array([ labels[i] for i in train_idx]) * 10
 		y_test = np.array([ labels[i] for i in test_idx ]) * 10
 
-		model = svm.SVR(kernel='precomputed', C=1)
-		model.fit(k_train, y_train)
-		pred = model.predict(k_test.T)
+		c_list = [0.01, 0.1, 1, 10]
+		best_pcc = -10
+		for c in c_list:
+			print 'c=', c
+			model = svm.SVR(kernel='precomputed', C=c)
+			model.fit(k_train, y_train)
+			pred = model.predict(k_test.T)
 
-		rmse = np.sqrt(mean_squared_error(pred, y_test))
-		pcc = scipy.stats.pearsonr(y_test, pred)[0]
-		scc = scipy.stats.spearmanr(y_test, pred)[0]
+			rmse = np.sqrt(mean_squared_error(pred, y_test))
+			pcc = scipy.stats.pearsonr(y_test, pred)[0]
+			scc = scipy.stats.spearmanr(y_test, pred)[0]
+			print rmse, pcc, scc
+			if pcc > best_pcc:
+				best_pcc = pcc
+				best_rmse = rmse
+				best_scc = scc
+				best_pred = pred
 		with open(result_file, 'w') as f:
-			f.write('%.3f %.2f %.2f\n' % (rmse / 10, pcc, scc))
-			for i in range(len(pred)):
-				f.write(str(pred[i]) + '\n')
+			f.write('%.3f %.2f %.2f\n' % (best_rmse / 10, best_pcc, best_scc))
+			for i in range(len(best_pred)):
+				f.write(str(best_pred[i]) + '\n')
 

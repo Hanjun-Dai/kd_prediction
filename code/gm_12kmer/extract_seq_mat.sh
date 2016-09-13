@@ -24,8 +24,7 @@ if [ ! -e $out_dir ]; then
     mkdir $out_dir
 fi
 
-for DATA in ace2 aft1 aft2 bas1 cad1 cbf1 cin5 cup9 dal80 gat1 gcn4 mata2 mcm1 met31 met32 msn1 msn2 nrg2 pdr3 pho4 reb1 rox1 rpn4 sko1 stb5 yap1 yap3 yap7; do
-
+DATA=$1
 DATA_ROOT=$PWD/../../data/$DATA
 RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn_all/$DATA
 
@@ -58,4 +57,3 @@ mv $save_dir/$k-mer-kd.txt $out_dir/$DATA-$k-mer.txt
 
 done
 
-done
