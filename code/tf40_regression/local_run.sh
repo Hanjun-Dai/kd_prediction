@@ -1,6 +1,6 @@
 #!/bin/bash
 
-idx=1
+idx=$1
 DATA=DREAM5/TF_${idx}
 
 DATA_ROOT=$PWD/../../data/$DATA
@@ -11,7 +11,7 @@ tool=kernel_loopy_bp
 LV=2
 w=2
 pad=0
-max_pool=1
+max_pool=0
 CONV_SIZE=256
 FP_LEN=256
 n_hidden=96
@@ -33,14 +33,14 @@ build/$tool \
                -pad $pad \
                -w $w \
 	       -string $DATA_ROOT/data.txt \
-               -train_idx $DATA_ROOT/train.csv \
-               -test_idx $DATA_ROOT/test.csv \
+               -train_idx $DATA_ROOT/train.txt \
+               -test_idx $DATA_ROOT/test.txt \
                -lr $learning_rate \
                -device $dev_id \
                -maxe $max_iter \
                -svdir $save_dir \
                -hidden $n_hidden \
-               -int_test 500 \
+               -int_test 100 \
                -int_report 1 \
                -l2 0.00 \
                -m 0.9 \

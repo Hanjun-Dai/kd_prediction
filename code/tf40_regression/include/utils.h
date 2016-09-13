@@ -113,7 +113,7 @@ inline Graph* BuildGraph(std::string st)
 	return g;
 }
 
-inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<int>& labels)
+inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<Dtype>& labels)
 {
 	graph_data.clear();
 	labels.clear();
@@ -123,70 +123,16 @@ inline void LoadRawData(std::vector< Graph >& graph_data, std::vector<int>& labe
 	ff >> num_graph;
 
 	std::string st;
-	int l;
+	Dtype l;
 	for (int i = 0; i < num_graph; ++i)
 	{
 		ff >> l >> st;
-		labels.push_back(l);
+		labels.push_back(l * cfg::scale);
 		
 		Graph* g = BuildGraph(st);		
 		graph_data.push_back(*g);
 	}
 }
 
-/* Caculate the trapezoidal area bound by the quad (X1,X2,Y1,Y2)*/
-template<typename Dtype>
-Dtype trapezoidArea(Dtype X1, Dtype X2, Dtype Y1, Dtype Y2) {
-	Dtype base   = std::abs(X1-X2);
-	Dtype height =     (Y1+Y2)/2.0;
-	return (base * height);
-}
-
-template<typename Dtype>
-inline Dtype calcAUC(int* labels, Dtype * scores, int n, int posclass) {
-	typedef std::pair<Dtype,int> mypair;
-	std::vector<mypair> L(n);
-	for(int i = 0; i < n; i++) {
-		L[i].first  = scores[i];
-		L[i].second = labels[i];
-	}
-	std::sort   (L.begin(),L.end());
-	std::reverse(L.begin(),L.end());
-
-  	/* Count number of positive and negative examples first */
-	int N=0,P=0;
-	for(int i = 0; i < n ; i++) {
-		if(labels[i] == posclass) P++;
-		else N++;
-	}
-	assert(N && P);
-
-    /* Then calculate the actual are under the ROC curve */
-	Dtype              A       = 0;
-	Dtype              fprev   = -2147483648;
-	unsigned long long	FP      = 0, 
-                        TP      = 0,
-                        FPprev  = 0, 
-                        TPprev  = 0;
-    
-	for(int i = 0 ; i < n; i++) {
-		Dtype fi   = L[i].first;
-		Dtype label= L[i].second;		
-		if(fi != fprev) {
-            /* Divide area here already : a bit slower, but gains in precision and avoids overflows */
-			A       = A + (trapezoidArea(FP*1.0/N,FPprev*1.0/N,TP*1.0/P,TPprev*1.0/P));
-			fprev	= fi;
-			FPprev	= FP;
-			TPprev	= TP;
-		}
-		if(label  == posclass)
-			TP = TP + 1;
-		else
-			FP = FP + 1;
-	}
-    /* Not the same as Fawcett's original pseudocode though I think his contains a typo */
-	A = A + trapezoidArea(1.0,FPprev*1.0/N,1.0,TPprev*1.0/P); 
-	return A;
-}
 
 #endif

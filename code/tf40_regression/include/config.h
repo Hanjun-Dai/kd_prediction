@@ -12,6 +12,7 @@ struct cfg
     static int dev_id, iter; 
     static int max_lv, conv_size, fp_len, kmer;
     static unsigned n_hidden;
+    static Dtype scale;
     static unsigned batch_size; 
     static unsigned max_epoch; 
     static bool max_pool, global_pool;
@@ -33,6 +34,8 @@ struct cfg
         {   
             if (strcmp(argv[i], "-kmer") == 0)
                 kmer = atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-scale") == 0)
+                scale = atof(argv[i + 1]);
             if (strcmp(argv[i], "-global_pool") == 0)
                 global_pool = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-max_pool") == 0)
@@ -109,6 +112,7 @@ struct cfg
     	std::cerr << "momentum = " << momentum << std::endl;
     	std::cerr << "init iter = " << iter << std::endl;	
         std::cerr << "device id = " << dev_id << std::endl;    
+	std::cerr << "scale = " << scale << std::endl;
     }
 };
 
@@ -133,6 +137,7 @@ int cfg::window_size = 1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
+Dtype cfg::scale = 1;
 const char* cfg::train_idx_file = nullptr;
 const char* cfg::test_idx_file = nullptr;
 const char* cfg::string_file = nullptr;
