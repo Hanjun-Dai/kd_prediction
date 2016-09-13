@@ -17,7 +17,7 @@ void InitModel()
 	auto* e2nsum_param = add_const<Edge2NodeMsgParam>(model, "e2n");
 	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
 		
-	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
+	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 2, 0, init_scale);
 
 	IParam<mode, Dtype> *node_pool_param = nullptr, *subg_param = nullptr, *h1_weight = nullptr;
 	if (cfg::max_pool)
@@ -77,8 +77,10 @@ void InitModel()
 	
 	auto* output = cl<ParamLayer>("output", gnn, {reluact_out_nn}, {h2_weight});
 	
-	cl<MSECriterionLayer>("mse", gnn, {output, label_layer});	
-	cl<ABSCriterionLayer>("mae", gnn, {output, label_layer}, PropErr::N);
+	cl< ErrCntCriterionLayer >("err", gnn, {output, label_layer});
+	cl< ClassNLLCriterionLayer >("nll", gnn, {output, label_layer}, true);
+//	cl<MSECriterionLayer>("mse", gnn, {output, label_layer});	
+//	cl<ABSCriterionLayer>("mae", gnn, {output, label_layer}, PropErr::N);
 }
 
 int main(int argc, const char** argv)
