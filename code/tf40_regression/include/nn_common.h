@@ -147,7 +147,7 @@ inline void MainLoop()
 	{
 		if (cfg::iter % cfg::test_interval == 0)
 		{			
-			std::cerr << "testing" << std::endl;            
+			std::cerr << "testing iter " << cfg::iter << std::endl;            
 			Dtype rmse = 0.0, mae = 0.0;
 			GetTestPred(y_pred, test_idx, mae, rmse);
 
@@ -161,7 +161,7 @@ inline void MainLoop()
 			Dtype auc = calcAUC(y_label, y_pred, test_idx.size(), 1);
 			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f\t test auc: %.4f", mae, rmse, auc) << std::endl;
 
-			FILE* fid = fopen(fmt::sprintf("%s/prediction.txt", cfg::save_dir).c_str(), "w");
+			FILE* fid = fopen(fmt::sprintf("%s/prediction_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
 			for (size_t i = 0; i < test_idx.size(); ++i)
 				fprintf(fid, "%.8f\n", y_pred[i]);
 			fclose(fid);
