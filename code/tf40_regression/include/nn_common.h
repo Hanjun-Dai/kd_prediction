@@ -21,9 +21,10 @@
 
 const MatMode mode = CPU;
 
+std::vector< std::string > raw_string;
 std::vector< Graph > graph_data;
 std::vector<Dtype> labels;
-std::vector<int> train_idx, test_idx;
+std::vector<int> train_idx, test_idx, inv_test_idx;
 
 NNGraph<mode, Dtype> gnn;
 Model<mode, Dtype> model;
@@ -95,9 +96,29 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 	label.CopyFrom(y_cpu);
 }
 
+DenseMat<CPU, Dtype> output_buf;
+inline void GetTestPred(Dtype* y_pred, std::vector<int>& test_idx, Dtype& mae, Dtype& rmse)
+{
+	mae = rmse = 0.0;
+	for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
+	{
+		GetBatch(test_idx, i, cfg::batch_size);
+		model.SetupConstParams(init_const_dict); 
+		gnn.FeedForward({{"data", &input}, {"label", &label}}, TEST);
+	    gnn.GetState("output", output_buf);
+	    auto& ground_truth = y_cpu;
+	    for (unsigned j = 0; j < ground_truth.rows; ++j)
+	    	y_pred[i + j] = output_buf.data[j];
+	    auto loss_map = gnn.GetLoss();
+		rmse += loss_map["mse"];
+		mae += loss_map["mae"];
+	}
+	rmse = sqrt(rmse / test_idx.size());
+	mae = mae / test_idx.size();
+}
+
 inline void MainLoop()
 {	
-	DenseMat<CPU, Dtype> output_buf;
 	//MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	AdamLearner<mode, Dtype> learner(&model, cfg::lr, cfg::l2_penalty);
 
@@ -111,6 +132,16 @@ inline void MainLoop()
 	}
 
 	Dtype* y_pred = new Dtype[test_idx.size()];
+	Dtype* y_inv_pred = new Dtype[inv_test_idx.size()];
+
+	int* y_label = new int[test_idx.size()];
+	for (unsigned i = 0; i < test_idx.size(); ++i)
+	{
+		if (labels[test_idx[i]] > cfg::test_auc_threshold)
+			y_label[i] = 1;
+		else
+			y_label[i] = 0;
+	}
 
 	for (; cfg::iter <= max_iter; ++cfg::iter, cur_pos += cfg::batch_size)
 	{
@@ -118,22 +149,17 @@ inline void MainLoop()
 		{			
 			std::cerr << "testing" << std::endl;            
 			Dtype rmse = 0.0, mae = 0.0;
-			for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
+			GetTestPred(y_pred, test_idx, mae, rmse);
+
+			if (cfg::inv_test)
 			{
-				GetBatch(test_idx, i, cfg::batch_size);
-				model.SetupConstParams(init_const_dict); 
-				gnn.FeedForward({{"data", &input}, {"label", &label}}, TEST);
-			    gnn.GetState("output", output_buf);
-                auto& ground_truth = y_cpu;
-                for (unsigned j = 0; j < ground_truth.rows; ++j)
-                	y_pred[i + j] = output_buf.data[j];
-				auto loss_map = gnn.GetLoss();
-				rmse += loss_map["mse"];
-				mae += loss_map["mae"];
-			}
-			rmse = sqrt(rmse / test_idx.size());
-			mae = mae / test_idx.size();
-			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse) << std::endl;
+				assert(test_idx.size() == inv_test_idx.size());
+				GetTestPred(y_inv_pred, inv_test_idx, mae, rmse);
+				for (unsigned i = 0; i < test_idx.size(); ++i)
+					y_pred[i] = (y_pred[i] + y_inv_pred[i]) / 2.0;					
+			}			
+			Dtype auc = calcAUC(y_label, y_pred, test_idx.size(), 1);
+			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f\t test auc: %.4f", mae, rmse, auc) << std::endl;
 
 			FILE* fid = fopen(fmt::sprintf("%s/prediction.txt", cfg::save_dir).c_str(), "w");
 			for (size_t i = 0; i < test_idx.size(); ++i)

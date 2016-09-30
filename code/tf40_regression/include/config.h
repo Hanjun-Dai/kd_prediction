@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <cassert>
+#include <fstream>
 #include <cstring>
 
 typedef float Dtype;
@@ -11,11 +13,12 @@ struct cfg
 {
     static int dev_id, iter; 
     static int max_lv, conv_size, fp_len, kmer;
+    static Dtype test_auc_threshold;
     static unsigned n_hidden;
     static Dtype scale;
     static unsigned batch_size; 
     static unsigned max_epoch; 
-    static bool max_pool, global_pool;
+    static bool max_pool, global_pool, inv_train, inv_test;
     static int num_nodes;
     static unsigned test_interval; 
     static unsigned report_interval; 
@@ -26,20 +29,27 @@ struct cfg
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
-    static const char *result_file, *train_idx_file, *test_idx_file, *string_file, *save_dir; 
+    static const char *result_file, *train_idx_file, *test_idx_file, *string_file, *save_dir, *file_auc_thresh; 
     
     static void LoadParams(const int argc, const char** argv)
     {
+        int part = 0;
         for (int i = 1; i < argc; i += 2)
         {   
             if (strcmp(argv[i], "-kmer") == 0)
                 kmer = atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-part") == 0)
+                part = atoi(argv[i + 1]);            
             if (strcmp(argv[i], "-scale") == 0)
                 scale = atof(argv[i + 1]);
             if (strcmp(argv[i], "-global_pool") == 0)
                 global_pool = (bool)atoi(argv[i + 1]);
             if (strcmp(argv[i], "-max_pool") == 0)
                 max_pool = (bool)atoi(argv[i + 1]);         
+            if (strcmp(argv[i], "-inv_train") == 0)
+                inv_train = (bool)atoi(argv[i + 1]);  
+            if (strcmp(argv[i], "-inv_test") == 0)
+                inv_test = (bool)atoi(argv[i + 1]);         
             if (strcmp(argv[i], "-pad") == 0)
                 pad = (bool)atoi(argv[i + 1]);          
             if (strcmp(argv[i], "-w") == 0)
@@ -78,6 +88,8 @@ struct cfg
 				string_file = argv[i + 1];
 			if (strcmp(argv[i], "-train_idx") == 0)
 				train_idx_file = argv[i + 1];
+            if (strcmp(argv[i], "-thresh_file") == 0)
+                file_auc_thresh = argv[i + 1];
 			if (strcmp(argv[i], "-test_idx") == 0)
 				test_idx_file = argv[i + 1];
             if (strcmp(argv[i], "-device") == 0)
@@ -93,6 +105,26 @@ struct cfg
         else
             node_dim = 1 << (2 * window_size);     
 
+        if (cfg::file_auc_thresh)
+        {
+            assert(part);
+            std::ifstream s_in(cfg::file_auc_thresh);
+            Dtype tt; 
+            int idx;
+            for (int i = 0; i < part; ++i)
+            {
+                s_in >> idx >> tt;
+                if (idx == part)
+                {
+                    test_auc_threshold = tt;
+                    break;
+                }
+            }
+        }
+
+        std::cerr << "test_auc_threshold = " << test_auc_threshold << std::endl;
+        std::cerr << "inv_train = " << inv_train << std::endl;
+        std::cerr << "inv_test = " << inv_test << std::endl;
         std::cerr << "max_pool = " << max_pool << std::endl;
         std::cerr << "node_dim = " << node_dim << std::endl;
         std::cerr << "pad = " << pad << std::endl;
@@ -112,10 +144,13 @@ struct cfg
     	std::cerr << "momentum = " << momentum << std::endl;
     	std::cerr << "init iter = " << iter << std::endl;	
         std::cerr << "device id = " << dev_id << std::endl;    
-	std::cerr << "scale = " << scale << std::endl;
+        std::cerr << "scale = " << scale << std::endl;
     }
 };
 
+Dtype cfg::test_auc_threshold = 0;
+bool cfg::inv_train = false;
+bool cfg::inv_test = false;
 bool cfg::global_pool = false;
 bool cfg::max_pool = false;
 bool cfg::pad = false;
@@ -143,5 +178,6 @@ const char* cfg::test_idx_file = nullptr;
 const char* cfg::string_file = nullptr;
 const char* cfg::result_file = nullptr;
 const char* cfg::save_dir = "./saved";
+const char* cfg::file_auc_thresh = nullptr;
 
 #endif

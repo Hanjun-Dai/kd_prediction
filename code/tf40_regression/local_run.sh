@@ -8,18 +8,20 @@ RESULT_ROOT=results/$DATA
 
 tool=kernel_loopy_bp
 
-LV=2
+LV=3
 w=2
 pad=0
-max_pool=0
+max_pool=1
 CONV_SIZE=256
 FP_LEN=256
 n_hidden=96
 bsize=128
-learning_rate=0.001
+learning_rate=0.0001
 max_iter=400000
 cur_iter=0
 dev_id=0
+inv_train=1
+inv_test=1
 fold=1
 save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-fold-$fold
 
@@ -30,6 +32,10 @@ fi
 
 build/$tool \
                -max_pool $max_pool \
+               -inv_train $inv_train \
+               -inv_test $inv_test \
+               -part $idx \
+               -thresh_file $PWD/../../data/DREAM5/aucthresh.csv \
                -pad $pad \
                -w $w \
 	       -string $DATA_ROOT/data.txt \
