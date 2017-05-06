@@ -87,7 +87,7 @@ int main(int argc, const char** argv)
 {
 	cfg::LoadParams(argc, argv);			
 
-	GPUHandle::Init(cfg::dev_id);	
+//	GPUHandle::Init(cfg::dev_id);	
 	
 	LoadRawData(cfg::train_file, graph_data, labels);
 	std::vector< Graph > test_g;
@@ -112,6 +112,6 @@ int main(int argc, const char** argv)
 
     MainLoop(); 
 	
-	GPUHandle::Destroy();
+//	GPUHandle::Destroy();
 	return 0;
 }

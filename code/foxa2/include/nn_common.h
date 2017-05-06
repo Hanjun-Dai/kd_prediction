@@ -111,11 +111,11 @@ inline void MainLoop()
 	neg_train_idx.clear();
 	minibatch_train_idx.resize(cfg::batch_size);
 
-	for (size_t i = 0; i < test_idx.size(); ++i)
-		if (labels[test_idx[i]] == 0)
-			neg_train_idx.push_back(test_idx[i]);
+	for (size_t i = 0; i < train_idx.size(); ++i)
+		if (labels[train_idx[i]] == 0)
+			neg_train_idx.push_back(train_idx[i]);
 		else
-			pos_train_idx.push_back(test_idx[i]);
+			pos_train_idx.push_back(train_idx[i]);
 
 	DenseMat<CPU, Dtype> output_buf;
 	//MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);

@@ -40,7 +40,7 @@ build/$tool \
                -svdir $save_dir \
                -hidden $n_hidden \
                -int_test 100 \
-               -int_report 1 \
+               -int_report 100 \
                -l2 0.00 \
                -m 0.9 \
                -lv $LV \
