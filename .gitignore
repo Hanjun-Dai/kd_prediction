@@ -1,4 +1,5 @@
 *.png
+*_prediction/
 **/logo/
 .ipynb_checkpoints/
 **/kmer_28set
