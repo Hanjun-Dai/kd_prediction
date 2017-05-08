@@ -17,7 +17,7 @@ void InitModel()
 	auto* e2nsum_param = add_const<Edge2NodeMsgParam>(model, "e2n");
 	auto* out_params = add_diff<LinearParam>(model, "outparam", cfg::conv_size, cfg::fp_len, 0, init_scale);
 		
-	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 2, 0, init_scale);
+	auto* h2_weight = add_diff<LinearParam>(model, "h2_weight", cfg::n_hidden, 1, 0, init_scale);
 
 	IParam<mode, Dtype> *node_pool_param = nullptr, *subg_param = nullptr, *h1_weight = nullptr;
 	if (cfg::max_pool)
@@ -77,10 +77,10 @@ void InitModel()
 	
 	auto* output = cl<ParamLayer>("output", gnn, {reluact_out_nn}, {h2_weight});
 	
-	cl< ErrCntCriterionLayer >("err", gnn, {output, label_layer});
-	cl< ClassNLLCriterionLayer >("nll", gnn, {output, label_layer}, true);
-//	cl<MSECriterionLayer>("mse", gnn, {output, label_layer});	
-//	cl<ABSCriterionLayer>("mae", gnn, {output, label_layer}, PropErr::N);
+	// cl< ErrCntCriterionLayer >("err", gnn, {output, label_layer});
+	// cl< ClassNLLCriterionLayer >("nll", gnn, {output, label_layer}, true);
+	cl<MSECriterionLayer>("mse", gnn, {output, label_layer});	
+	cl<ABSCriterionLayer>("mae", gnn, {output, label_layer}, PropErr::N);
 }
 
 int main(int argc, const char** argv)
@@ -89,14 +89,15 @@ int main(int argc, const char** argv)
 
 //	GPUHandle::Init(cfg::dev_id);	
 	
-	LoadRawData(cfg::train_file, graph_data, labels);
+	LoadRawData(cfg::train_file, graph_data, labels, cfg::inv_train);
+
 	std::vector< Graph > test_g;
 	std::vector<int> test_l;
 	train_idx.resize(graph_data.size());
 	for (size_t i = 0; i < train_idx.size(); ++i)
 		train_idx[i] = i;
 	
-	LoadRawData(cfg::test_file, test_g, test_l);
+	LoadRawData(cfg::test_file, test_g, test_l, cfg::inv_test);
 
 	test_idx.resize(test_g.size());
 	for (size_t i = 0; i < test_idx.size(); ++i)

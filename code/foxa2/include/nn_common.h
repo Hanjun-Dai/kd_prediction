@@ -20,6 +20,7 @@
 #include "err_cnt_criterion_layer.h"
 #include "model.h"
 #include "learner.h"
+#include <gsl/gsl_statistics.h>
 
 const MatMode mode = CPU;
 
@@ -29,11 +30,11 @@ std::vector<int> train_idx, test_idx;
 
 NNGraph<mode, Dtype> gnn;
 Model<mode, Dtype> model;
-DenseMat<CPU, Dtype> x_cpu;
-SparseMat<CPU, Dtype> y_cpu;
+DenseMat<CPU, Dtype> x_cpu, y_cpu;
+//SparseMat<CPU, Dtype> y_cpu;
 
-DenseMat<mode, Dtype> input;
-SparseMat<mode, Dtype> label;
+DenseMat<mode, Dtype> input, label;
+//SparseMat<mode, Dtype> label;
 GraphStruct graph;
 std::map<std::string, void*> init_const_dict;
 
@@ -59,8 +60,8 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 	
 	graph.Resize(num, node_cnt);
 	x_cpu.Zeros(node_cnt, cfg::node_dim);
-	y_cpu.Resize(num, 2);
-	y_cpu.ResizeSp(num, num + 1);
+	y_cpu.Resize(num, 1);
+	//y_cpu.ResizeSp(num, num + 1);
 
 	// labeling nodes, parsing node features
 	Dtype* ptr = x_cpu.data;
@@ -94,11 +95,12 @@ inline void GetBatch(const std::vector<int>& idx_list, unsigned st, unsigned num
 	
     for (unsigned i = st; i < ed; ++i)
     {
-    	y_cpu.data->ptr[i - st] = i - st;
-    	y_cpu.data->val[i - st] = 1.0;
-    	y_cpu.data->col_idx[i - st] = labels[ idx_list[i] ]; 
+		y_cpu.data[i - st] = labels[ idx_list[i] ];
+    	// y_cpu.data->ptr[i - st] = i - st;
+    	// y_cpu.data->val[i - st] = 1.0;
+    	// y_cpu.data->col_idx[i - st] = labels[ idx_list[i] ]; 
     }
-    y_cpu.data->ptr[num] = num;
+    //y_cpu.data->ptr[num] = num;
 
 	input.CopyFrom(x_cpu);
 	label.CopyFrom(y_cpu);
@@ -132,13 +134,15 @@ inline void MainLoop()
 
 	int* y_label = new int[test_idx.size()];
 	Dtype* y_pred = new Dtype[test_idx.size()];
+	double* y_label_double = new double[test_idx.size()];
+	double* y_pred_double = new double[test_idx.size()];
+	double* work_buf = new double[2 * test_idx.size() + 10];
 
 	for (; cfg::iter <= max_iter; ++cfg::iter, cur_pos += cfg::batch_size / 2)
 	{
 		if (cfg::iter % cfg::test_interval == 0)
 		{			
-			std::cerr << "testing" << std::endl;            
-			Dtype err = 0.0, nll = 0.0;
+			std::cerr << "testing" << std::endl;    
 			for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
 			{
 				GetBatch(test_idx, i, cfg::batch_size);
@@ -147,18 +151,38 @@ inline void MainLoop()
 			    gnn.GetState("output", output_buf);
                 auto& ground_truth = y_cpu;
                 for (unsigned j = 0; j < ground_truth.rows; ++j)
-                {
-                	y_label[i + j] = ground_truth.data->col_idx[j];
-                	y_pred[i + j] = output_buf.data[j * 2 + 1];
-                }
-				auto loss_map = gnn.GetLoss();
-				err += loss_map["err"];
-				nll += loss_map["nll"];
+					y_pred[i + j] = output_buf.data[j];
+                	//y_pred[i + j] = output_buf.data[j * 2 + 1];
 			}
-			err /= test_idx.size();
-			nll /= test_idx.size();
-			Dtype auc = calcAUC(y_label, y_pred, test_idx.size(), 1);
-			std::cerr << fmt::sprintf("test err: %.4f\t test nll: %.4f\t test auc: %.4f", err, nll, auc) << std::endl;			
+			int n_test = test_idx.size();
+			if (cfg::inv_test)
+			{
+				n_test /= 2;
+				for (unsigned i = 0; i < test_idx.size(); i += 2)
+				{
+					y_pred_double[i / 2] = (y_pred[i] + y_pred[i + 1]) / 2.0;
+					y_label[i / 2] = labels[test_idx[i]];
+				}
+			} else {
+				for (unsigned i = 0; i < test_idx.size(); i++)
+				{
+					y_pred_double[i] = y_pred[i];
+					y_label[i] = labels[test_idx[i]];
+				}
+			}
+			int n_correct = 0;
+			for (int i = 0; i < n_test; ++i)
+			{
+				std::cerr << y_pred_double[i] << std::endl;
+				int pred = y_pred_double[i] > 0.5 ? 1 : 0;
+				n_correct += pred == y_label[i];
+				y_label_double[i] = y_label[i];
+			}
+			Dtype err = 1.0 - n_correct / (double)n_test;
+			Dtype auc = calcAUC(y_label, y_pred_double, n_test, 1);
+			Dtype spc = gsl_stats_spearman(y_pred_double, 1, y_label_double, 1, n_test, work_buf);
+			Dtype pcc = gsl_stats_correlation(y_label_double, 1, y_pred_double, 1, n_test);
+			std::cerr << fmt::sprintf("test err: %.4f\t test auc: %.4f\t test spc: %.4f\t test pcc: %.4f", err, auc, spc, pcc) << std::endl;			
 		}
 		
 		if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
@@ -191,7 +215,8 @@ inline void MainLoop()
 
     	if (cfg::iter % cfg::report_interval == 0)
 		{
-			std::cerr << fmt::sprintf("train iter=%d\terr: %.4f\tnll: %.4f", cfg::iter, loss_map["err"] / y_cpu.rows, sqrt(loss_map["nll"] / y_cpu.rows)) << std::endl;
+			//std::cerr << fmt::sprintf("train iter=%d\terr: %.4f\tnll: %.4f", cfg::iter, loss_map["err"] / y_cpu.rows, sqrt(loss_map["nll"] / y_cpu.rows)) << std::endl;
+			std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\tmse: %.4f", cfg::iter, loss_map["mae"] / y_cpu.rows, sqrt(loss_map["mse"] / y_cpu.rows)) << std::endl;
 		}
 		
 		gnn.BackPropagation();

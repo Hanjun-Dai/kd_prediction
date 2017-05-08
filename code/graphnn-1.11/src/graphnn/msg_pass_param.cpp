@@ -178,7 +178,7 @@ void SubgraphMsgParam<mode, Dtype>::InitCPUWeight(GraphStruct* graph)
 			auto& list = graph->subgraph->head[i];
 			for (size_t j = 0; j < list.size(); ++j)
 			{
-				data->val[nnz] = 1.0;
+				data->val[nnz] = 1.0 / list.size();
 				data->col_idx[nnz] = list[j];
 				nnz++;
 			}

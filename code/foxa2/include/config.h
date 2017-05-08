@@ -22,6 +22,7 @@ struct cfg
     static int window_size;
     static int node_dim;
     static bool pad;
+    static bool inv_train, inv_test;
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
@@ -43,6 +44,10 @@ struct cfg
                 window_size = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-lr") == 0)
 		        lr = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-inv_train") == 0)
+		        inv_train = atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-inv_test") == 0)
+		        inv_test = atoi(argv[i + 1]);
             if (strcmp(argv[i], "-cur_iter") == 0)
                 iter = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-hidden") == 0)
@@ -113,6 +118,8 @@ struct cfg
 bool cfg::global_pool = false;
 bool cfg::max_pool = false;
 bool cfg::pad = false;
+bool cfg::inv_train = false;
+bool cfg::inv_test = false;
 int cfg::dev_id = 0;
 int cfg::node_dim = 0;
 int cfg::iter = 0;

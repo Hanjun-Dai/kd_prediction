@@ -13,7 +13,7 @@ CXXFLAGS += $(addprefix -I,$(include_dirs))
 
 build/%: src/%.cpp $(gnn_lib) ./include/*
 	$(dir_guard)
-	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp, %.a $^) -L$(lib_dir) -lgnn $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp, %.a $^) -L$(lib_dir) -lgnn $(LDFLAGS) -lgsl
 
 clean:
 	rm -rf build

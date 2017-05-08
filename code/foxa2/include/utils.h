@@ -23,6 +23,34 @@ struct Graph
 	std::vector<int> node_label; 
 };
 
+inline std::string GetRevComp(std::string st)
+{
+	auto ans = st;
+	for (size_t i = 0; i < ans.size(); ++i)
+		ans[i] = st[ans.size() - i - 1];
+	for (size_t i = 0; i < ans.size(); ++i)
+	{
+		switch (ans[i])
+		{
+			case 'A':
+				ans[i] = 'T';
+				break;
+			case 'T':
+				ans[i] = 'A';
+				break;
+			case 'C':
+				ans[i] = 'G';
+				break;
+			case 'G':
+				ans[i] = 'C';
+				break;
+			default:
+				assert(false);
+		}
+	}
+	return ans;
+}
+
 inline void LoadIndexes(const char* filename, std::vector<int>& idx_list, size_t num_samples)
 {
 	if (filename == nullptr)
@@ -113,7 +141,7 @@ inline Graph* BuildGraph(std::string st)
 	return g;
 }
 
-inline void LoadRawData(const char* fname, std::vector< Graph >& graph_data, std::vector<int>& labels)
+inline void LoadRawData(const char* fname, std::vector< Graph >& graph_data, std::vector<int>& labels, bool use_inv)
 {
 	graph_data.clear();
 	labels.clear();
@@ -131,6 +159,13 @@ inline void LoadRawData(const char* fname, std::vector< Graph >& graph_data, std
 		
 		Graph* g = BuildGraph(st);
 		graph_data.push_back(*g);
+		if (use_inv)
+		{
+			auto inv_st = GetRevComp(st);
+			Graph* g2 = BuildGraph(inv_st);
+			graph_data.push_back(*g2);
+			labels.push_back(l);
+		}
 	}
 }
 

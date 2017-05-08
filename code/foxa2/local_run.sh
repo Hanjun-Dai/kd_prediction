@@ -10,7 +10,7 @@ tool=kernel_loopy_bp
 LV=2
 w=2
 pad=0
-max_pool=1
+max_pool=0
 global_pool=1
 CONV_SIZE=256
 FP_LEN=256
@@ -20,6 +20,8 @@ learning_rate=0.001
 max_iter=400000
 cur_iter=0
 dev_id=0
+inv_train=1
+inv_test=1
 save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -28,6 +30,8 @@ then
 fi
 
 build/$tool \
+               -inv_train $inv_train \
+               -inv_test $inv_test \
                -max_pool $max_pool \
                -pad $pad \
                -w $w \
