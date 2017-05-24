@@ -1,4 +1,5 @@
 *.png
+*_prediction/
 .vscode/
 **/logo/
 .ipynb_checkpoints/
