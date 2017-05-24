@@ -173,11 +173,14 @@ inline void MainLoop()
 			int n_correct = 0;
 			for (int i = 0; i < n_test; ++i)
 			{
-				std::cerr << y_pred_double[i] << std::endl;
 				int pred = y_pred_double[i] > 0.5 ? 1 : 0;
 				n_correct += pred == y_label[i];
 				y_label_double[i] = y_label[i];
 			}
+			FILE* fout = fopen(fmt::sprintf("pred_%d.txt", cfg::iter).c_str(), "w");
+			for (int i = 0; i < n_test; ++i)
+				fprintf(fout, "%.6f\n", y_pred_double[i]);
+			fclose(fout);
 			Dtype err = 1.0 - n_correct / (double)n_test;
 			Dtype auc = calcAUC(y_label, y_pred_double, n_test, 1);
 			Dtype spc = gsl_stats_spearman(y_pred_double, 1, y_label_double, 1, n_test, work_buf);

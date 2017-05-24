@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DATA=FOXA2
+DATA=FOXA2_2000
 
 DATA_ROOT=$PWD/../../data/$DATA
 RESULT_ROOT=results/$DATA
@@ -10,7 +10,7 @@ tool=kernel_loopy_bp
 LV=2
 w=2
 pad=0
-max_pool=0
+max_pool=1
 global_pool=1
 CONV_SIZE=256
 FP_LEN=256
