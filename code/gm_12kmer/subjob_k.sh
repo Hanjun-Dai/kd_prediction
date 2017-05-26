@@ -20,7 +20,7 @@ for t_bsize in 64; do
 
 for t_learning_rate in 0.001; do 
 
-for t_fold in 6 7 8 9 10; do
+for t_fold in 1 2 3 4 5 6 7 8 9 10; do
 
 qsub -v data=$t_data,tool=$t_tool,lv=$t_lv,w=$t_w,pad=$t_pad,max_pool=$t_max_pool,global_pool=$t_global_pool,conv_size=$t_conv_size,fp_len=$t_fp_len,bsize=$t_bsize,learning_rate=$t_learning_rate,fold=$t_fold pbs_gm_k.pbs
 

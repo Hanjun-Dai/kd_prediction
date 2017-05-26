@@ -11,7 +11,7 @@
 #include "graph_pool_param.h"
 #include "param_layer.h"
 #include "input_layer.h"
-#include "cppformat/format.h"
+#include "fmt/format.h"
 #include "relu_layer.h"
 #include "c_add_layer.h"
 #include "mse_criterion_layer.h"
@@ -194,6 +194,7 @@ inline void MainLoop()
 
 	DenseMat<CPU, Dtype> output_buf;
 	MomentumSGDLearner<mode, Dtype> learner(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
+	//AdamLearner<mode, Dtype> learner(&model, cfg::lr, cfg::l2_penalty);
 	int max_iter = (long long)cfg::max_epoch; // * (long long)train_idx.size() / cfg::batch_size;
 	unsigned cur_pos = 0;
 	int init_iter = cfg::iter;

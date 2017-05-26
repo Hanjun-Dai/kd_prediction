@@ -17,4 +17,4 @@ Working directory: ${PWD}
 
 cd /nv/hcoc1/hdai8/data/Research/kd_prediction/code/tf40_regression
 
-./TF_${part}-${inv_test}.sh
+./final_tune/TF_${part}-${inv_test}.sh
