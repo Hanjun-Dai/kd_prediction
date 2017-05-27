@@ -17,6 +17,10 @@ s / 10
 %%
 pred = pred * 1000;
 label = label * 1000;
+idxes = find(label < 100);
+pred = pred(idxes);
+pred(find(pred > 300)) = 100;
+label = label(idxes);
 scatter_fit_goodness(pred, label, 'title', '', 'xlabel', 'Predicted Kd', 'ylabel', 'True Kd');
 set(gcf, 'PaperPositionMode', 'auto', 'PaperSize', [7, 6]);
 print('-dpdf', '12mer-scatter.pdf');

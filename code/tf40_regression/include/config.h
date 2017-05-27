@@ -95,7 +95,7 @@ struct cfg
             if (strcmp(argv[i], "-device") == 0)
     			dev_id = atoi(argv[i + 1]);
         }
-
+        assert(train_idx_file);
         if (pad)
         {
             node_dim = 1;

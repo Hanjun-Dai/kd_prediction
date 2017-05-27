@@ -1,26 +1,29 @@
 #!/bin/bash
 
-DATA=12mer-kd
+idx=$1
+DATA=DREAM5/TF_$idx
 
 DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=results/$DATA
+RESULT_ROOT=$HOME/scratch/results/$DATA
 
 tool=kernel_loopy_bp
 
-LV=2
+LV=3
 w=2
 pad=0
 max_pool=1
-CONV_SIZE=256
-FP_LEN=256
+CONV_SIZE=128
+FP_LEN=$CONV_SIZE
 n_hidden=96
-bsize=16
+bsize=128
+inv_train=1
+inv_test=1
 learning_rate=0.001
 max_iter=100
 cur_iter=0
 dev_id=0
-fold=1
-save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-fold-$fold
+fold=10
+save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-inv_test-$inv_test-fold-$fold
 
 if [ ! -e $save_dir ];
 then
@@ -29,17 +32,21 @@ fi
 
 build/$tool \
                -max_pool $max_pool \
+	       -inv_train $inv_train \
+	       -inv_test $inv_test \
+	       -part $idx \
+	       -thresh_file $PWD/../../data/DREAM5/aucthresh.csv \
                -pad $pad \
                -w $w \
-	       -string $DATA_ROOT/${DATA}.txt \
-               -train_idx $DATA_ROOT/10fold_idx/train_idx-${fold}.txt \
-               -test_idx $DATA_ROOT/10fold_idx/test_idx-${fold}.txt \
+	       -string $DATA_ROOT/data.txt \
+               -train_idx $DATA_ROOT/train.txt \
+               -test_idx $DATA_ROOT/test.txt \
                -lr $learning_rate \
                -device $dev_id \
                -maxe $max_iter \
                -svdir $save_dir \
                -hidden $n_hidden \
-               -int_test 1000 \
+               -int_test 500 \
                -int_report 1 \
                -l2 0.00 \
                -m 0.9 \

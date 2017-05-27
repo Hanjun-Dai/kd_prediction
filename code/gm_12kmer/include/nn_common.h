@@ -18,7 +18,7 @@
 #include "abs_criterion_layer.h"
 #include "model.h"
 #include "learner.h"
-
+#include <ctime>
 const MatMode mode = CPU;
 
 std::vector< Graph > graph_data;
@@ -208,12 +208,14 @@ inline void MainLoop()
 	Dtype* y_pred = new Dtype[test_idx.size()];
 	Dtype best_pcc = 0, best_rmse = 0;
 
+        FILE* f_time = fopen(fmt::sprintf("%s/time.txt", cfg::save_dir).c_str(), "w");
 	for (; cfg::iter <= max_iter; ++cfg::iter, cur_pos += cfg::batch_size)
 	{
 		if (cfg::iter % cfg::test_interval == 0)
 		{			
 			std::cerr << "testing" << std::endl;            
 			Dtype rmse = 0.0, mae = 0.0;
+			auto start_t = clock();
 			for (unsigned i = 0; i < test_idx.size(); i += cfg::batch_size)
 			{
 				GetBatch(test_idx, i, cfg::batch_size);
@@ -230,6 +232,9 @@ inline void MainLoop()
 				rmse += loss_map["mse"];
 				mae += loss_map["mae"];
 			}
+			auto end_t = clock();
+			auto dur = (end_t - start_t) / double(CLOCKS_PER_SEC);
+                        fprintf(f_time, "test %.4f, total %d\n", dur, (int)test_idx.size());
 			Dtype label_avg = 0.0, pred_avg = 0.0, nume = 0.0, s1 = 0.0, s2 = 0.0;
 			for (size_t i = 0; i < test_idx.size(); ++i)
 			{
@@ -273,6 +278,7 @@ inline void MainLoop()
 			cur_pos = 0;
 		}
 	
+	        auto batch_start = clock();
 		GetBatch(train_idx, cur_pos, cfg::batch_size);
 		model.SetupConstParams(init_const_dict); 
 		gnn.FeedForward({{"data", &input}, {"label", &label}}, TRAIN);
@@ -285,8 +291,11 @@ inline void MainLoop()
 		
 		gnn.BackPropagation();
 		learner.Update();
+		auto batch_end = clock();
+		auto batch_dur = (batch_end - batch_start) / double(CLOCKS_PER_SEC);
+		fprintf(f_time, "train %.4f, bsize %d, total %d\n", batch_dur, cfg::batch_size,(int) train_idx.size());
 	}
-
+        fclose(f_time);
 	std::cerr << "pcc: " << best_pcc << " rmse: " << best_rmse << std::endl;
 }
 

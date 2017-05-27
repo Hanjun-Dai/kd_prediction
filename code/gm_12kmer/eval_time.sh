@@ -1,26 +1,28 @@
 #!/bin/bash
 
-DATA=12mer-kd
+DATA=$1
 
 DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=results/$DATA
+RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn/$DATA
 
-tool=kernel_loopy_bp
+tool=$2
 
-LV=2
-w=2
-pad=0
-max_pool=1
-CONV_SIZE=256
-FP_LEN=256
+LV=$3
+w=$4
+pad=$5
+max_pool=$6
+global_pool=$7
+CONV_SIZE=$8
+FP_LEN=$9
+bsize=${10}
+learning_rate=${11}
+fold=${12}
 n_hidden=96
-bsize=16
-learning_rate=0.001
-max_iter=100
+scale=1
+max_iter=2000
 cur_iter=0
 dev_id=0
-fold=1
-save_dir=$RESULT_ROOT/$tool-lv-$LV-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-fold-$fold
+save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
 
 if [ ! -e $save_dir ];
 then
@@ -28,6 +30,9 @@ then
 fi
 
 build/$tool \
+	       -result best_pred-fold-$fold.txt \
+	       -global_pool $global_pool \
+	       -scale $scale \
                -max_pool $max_pool \
                -pad $pad \
                -w $w \
@@ -40,7 +45,7 @@ build/$tool \
                -svdir $save_dir \
                -hidden $n_hidden \
                -int_test 1000 \
-               -int_report 1 \
+               -int_report 100 \
                -l2 0.00 \
                -m 0.9 \
                -lv $LV \
@@ -48,4 +53,4 @@ build/$tool \
                -fp $FP_LEN \
                -b $bsize \
                -cur_iter $cur_iter \
-               2>&1 | tee $save_dir/log.txt 
+               2>&1 | tee $save_dir/log-$fold.txt 

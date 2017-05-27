@@ -18,7 +18,7 @@
 #include "abs_criterion_layer.h"
 #include "model.h"
 #include "learner.h"
-
+#include <ctime>
 const MatMode mode = CPU;
 
 std::vector< std::string > raw_string;
@@ -143,12 +143,14 @@ inline void MainLoop()
 			y_label[i] = 0;
 	}
 
+        FILE* f_time = fopen(fmt::sprintf("%s/time.txt", cfg::save_dir).c_str(), "w");
 	for (; cfg::iter <= max_iter; ++cfg::iter, cur_pos += cfg::batch_size)
 	{
 		if (cfg::iter % cfg::test_interval == 0)
 		{			
 			std::cerr << "testing iter " << cfg::iter << std::endl;            
 			Dtype rmse = 0.0, mae = 0.0;
+			auto start_t = clock();
 			GetTestPred(y_pred, test_idx, mae, rmse);
 
 			if (cfg::inv_test)
@@ -158,6 +160,9 @@ inline void MainLoop()
 				for (unsigned i = 0; i < test_idx.size(); ++i)
 					y_pred[i] = (y_pred[i] + y_inv_pred[i]) / 2.0;					
 			}			
+			auto end_t = clock();
+			auto dur = (end_t - start_t) / double(CLOCKS_PER_SEC);
+			fprintf(f_time, "test %.4f, total %d\n", dur, (int)test_idx.size());
 			Dtype auc = calcAUC(y_label, y_pred, test_idx.size(), 1);
 			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f\t test auc: %.4f", mae, rmse, auc) << std::endl;
 
@@ -178,6 +183,7 @@ inline void MainLoop()
 			std::random_shuffle(train_idx.begin(), train_idx.end());
 			cur_pos = 0;
 		}
+		auto batch_start = clock();
 	
 		GetBatch(train_idx, cur_pos, cfg::batch_size);
 		model.SetupConstParams(init_const_dict); 
@@ -191,6 +197,9 @@ inline void MainLoop()
 		
 		gnn.BackPropagation();
 		learner.Update();
+		auto batch_end = clock();
+		auto batch_dur = (batch_end - batch_start)/ double(CLOCKS_PER_SEC);
+		fprintf(f_time, "train %.4f, bsize %d, total %d\n", batch_dur, cfg::batch_size, (int)train_idx.size());
 	}
 }
 
