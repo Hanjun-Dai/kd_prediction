@@ -10,14 +10,15 @@ def load_idx(fname):
 
     return idx_list
 
-def load_strs():
+def load_data():
     fname = '%s/data.txt' % data_root
     ll = []
     with open(fname, 'r') as f:
         f.readline()
         for row in f:
-            row = row.split()[1]
-            ll.append(row)
+            val, st = row.split()
+	    val = float(val)
+            ll.append((val, st))
     return ll
 
 def output_file(idxes, suffix):

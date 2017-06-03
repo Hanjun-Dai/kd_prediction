@@ -25,7 +25,7 @@ def output_file(fold, idxes, suffix):
     ll = []
     for i in idxes:
         ll.append((i, dna_list[i]))
-    ll = sorted(ll, key = lambda x : x[1][0, reverse=True)
+    ll = sorted(ll, key = lambda x : x[1][0], reverse=True)
 
     with open('%s/%s-%d.fasta' % (out_root, suffix, fold), 'w') as f:
         with open('%s/%s-%d.label' % (out_root, suffix, fold), 'w') as f_label:
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     if os.path.isdir(out_root):
         shutil.rmtree(out_root)
     os.makedirs(out_root)
-    dna_list = load_strs()
+    dna_list = load_data()
     for i in range(1, 11):
         train_idx = load_idx('%s/10fold_idx/train_idx-%d.txt' % (data_root, i))
         test_idx = load_idx('%s/10fold_idx/test_idx-%d.txt' % (data_root, i))
