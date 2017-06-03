@@ -21,14 +21,14 @@ def load_data():
             ll.append((val, st))
     return ll
 
-def output_file(fold, idxes, suffix):
+def output_file(idxes, suffix):
     ll = []
     for i in idxes:
         ll.append((i, dna_list[i]))
     ll = sorted(ll, key = lambda x : x[1][0], reverse=True)
 
-    with open('%s/%s-%d.fasta' % (out_root, suffix, fold), 'w') as f:
-        with open('%s/%s-%d.label' % (out_root, suffix, fold), 'w') as f_label:
+    with open('%s/%s.fasta' % (out_root, suffix), 'w') as f:
+        with open('%s/%s.label' % (out_root, suffix), 'w') as f_label:
             for i in range(len(ll)):
                 f.write('>seq%d\n' % ll[i][0])
                 f.write('%s\n' % ll[i][1][1])
