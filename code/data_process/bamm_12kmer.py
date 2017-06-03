@@ -10,21 +10,29 @@ def load_idx(fname):
 
     return idx_list
 
-def load_strs():
+def load_data():
     fname = '%s/%s.txt' % (data_root, dataset)
     ll = []
     with open(fname, 'r') as f:
         f.readline()
         for row in f:
-            row = row.split()[1]
-            ll.append(row)
+            val, st = row.split()
+            val = float(val)
+            ll.append((val, st))
     return ll
 
 def output_file(fold, idxes, suffix):
+    ll = []
+    for i in idxes:
+        ll.append((i, dna_list[i]))
+    ll = sorted(ll, key = lambda x : x[1][0, reverse=True)
+
     with open('%s/%s-%d.fasta' % (out_root, suffix, fold), 'w') as f:
-        for i in idxes:
-            f.write('>seq%d\n' % i)
-            f.write('%s\n' % dna_list[i])
+        with open('%s/%s-%d.label' % (out_root, suffix, fold), 'w') as f_label:
+            for i in range(len(ll)):
+                f.write('>seq%d\n' % ll[i][0])
+                f.write('%s\n' % ll[i][1][1])
+                f_label.write('%.10f\n' % ll[i][1][0])
 
 if __name__ == '__main__':
     dataset = sys.argv[1]
