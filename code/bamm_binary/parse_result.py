@@ -15,7 +15,7 @@ if __name__ == '__main__':
     pred = []
     with open(f_label, 'r') as f:
 	for line in f:
-	    line = line.split()[0]
+	    line = line.strip()
 	    label.append(float(line))
     with open(f_pred, 'r') as f:
 	for line in f:
