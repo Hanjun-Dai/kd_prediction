@@ -94,13 +94,23 @@ for data in datasets:
         m.append(mean)
         s.append(std)
         idxes.append(cur_iter)
+    mm = np.array(m)
+    ss = np.array(s)
+    idxes = np.array(idxes)
+    m = []
+    s = []
+    for i in range(0, len(mm), st):
+        if i + st > len(mm):
+            ed = len(mm)
+        else:
+            ed = i + st
+        cur_m = np.mean(mm[i : ed])
+        cur_s = np.mean(ss[i : ed])
+        m.append(cur_m)
+        s.append(cur_s)
+    r = range(0, len(mm), st)
     m = np.array(m)
     s = np.array(s)
-    idxes = np.array(idxes)
-    r = range(0, len(m), st)
-    m = m[r]
-    s = s[r]
-    print(m)
     idxes = idxes[r]
     fig = plt.figure()
     plt.plot(idxes, m, '-', linewidth=2)
