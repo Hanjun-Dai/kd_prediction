@@ -1,12 +1,12 @@
-for t_part in 1 4 5 8 9 10 12 14 17 18 19 22 23 25 28 29 30 33 34 35 37 39 40 42 43 44 45 46 48 50 51 53 54 55 56 58 60 62 63 64 65; do
+for t_part in 2 3 6 7 11 13 15 16 20 21 24 26 27 31 32 36 37 38 41 47 49 52 57 59 61 66; do
 
 for t_fold in `seq 0 1 2`; do
 
-for t_lv in 3; do
+for t_lv in 2 3; do
 
 for t_mp in 0 1; do
 
-for t_conv in 64 128 256; do
+for t_conv in 64 128; do
 
 for t_lr in 0.0001 0.001; do
 
