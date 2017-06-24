@@ -84,7 +84,8 @@ for data in datasets:
     m = []
     idxes = []
     s = []
-    for cur_iter in best_train:
+    keys = sorted(best_train.keys())
+    for cur_iter in keys:
         mean = np.mean(best_train[cur_iter])
         if len(best_train[cur_iter]) > 1:
             std = np.std(best_train[cur_iter])
