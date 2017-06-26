@@ -39,8 +39,8 @@ def read_log(logfile):
         return train_iter, train_rmse, test_iter, test_rmse
 
 st = int(sys.argv[1])
-#result_root = os.path.expanduser('~') + '/scratch/results/DREAM5'
-result_root = os.path.expanduser('~') + '/scratch/results/kd_prediction_gnn'
+result_root = os.path.expanduser('~') + '/scratch/results/DREAM5'
+#result_root = os.path.expanduser('~') + '/scratch/results/kd_prediction_gnn'
 
 if 'DREAM5' in result_root:
     metric = 'auc'

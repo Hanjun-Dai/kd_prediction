@@ -1,10 +1,10 @@
 #!/bin/bash
 
-data_root=../../bamm_data
+data_root=../../bamm_data/DREAM5
 tool_root=$HOME/data/Playground/BaMMmotif/build
-frac=$1
-dataset=$2
-has_rev=$3
+frac=0.5
+dataset=TF_1
+has_rev=0
 output_folder=$HOME/scratch/results/BaMM_dream5/$dataset-$frac-inv-$has_rev
 
 if [ ! -e $output_folder ]; 
