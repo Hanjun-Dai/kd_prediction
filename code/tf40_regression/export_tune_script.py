@@ -9,25 +9,25 @@ if __name__ == '__main__':
         os.makedirs(output_folder)
 
     d = {}
-    d['nonlinear'] = ['0', '1']
+    d['nonlinear'] = ['0']
     d['CONV_SIZE'] = ['32', '64', '128']
     d['LV'] = ['2', '3', '4', '5']
-    d['bsize'] = ['16', '32', '64', '128']
+    d['bsize'] = ['16', '32', '64']
     files = os.listdir('final_tune')
     for fname in files:
         content = []
         with open('final_tune/%s' % fname, 'r') as f:
             for line in f:
                 line = line.rstrip()
-                if 'RESULT_ROOT' in line:
-                    line += '/%s' % field
                 if 'save_dir=' in line:
                     line += '-nonlinear-$nonlinear'
+		elif 'RESULT_ROOT' in line:
+                    line += '/%s' % field
                 content.append(line)
                 if 'max_pool=' in line:
-                    content.append('nonlinear=0')
+                    content.append('nonlinear=1')
                 if 'build/$tool' in line:
-                    content.append('\t      -nonlinear $nonlinear')
+                    content.append('\t       -nonlinear $nonlinear \\')
                     
         for v in d[field]:
             with open('%s/%s-%s-%s' % (output_folder, field, v, fname), 'w') as f:
