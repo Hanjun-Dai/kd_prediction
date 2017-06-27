@@ -64,7 +64,7 @@ void InitModel()
     }
 
     auto* e2npool = cl<ParamLayer>(gnn, {cur_message_layer}, {e2nsum_param}); 
-    ILayer<mode, Dtype>* hidden_msg, reluact_fp;
+    ILayer<mode, Dtype>* hidden_msg, *reluact_fp;
 	if (cfg::nonlinear)
 		hidden_msg = cl<ReLULayer>(gnn, {e2npool});
 	else
