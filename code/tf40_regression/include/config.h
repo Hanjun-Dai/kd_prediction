@@ -25,7 +25,7 @@ struct cfg
     static unsigned save_interval; 
     static int window_size;
     static int node_dim;
-    static bool pad;
+    static bool pad, nonlinear;
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
@@ -51,7 +51,9 @@ struct cfg
             if (strcmp(argv[i], "-inv_test") == 0)
                 inv_test = (bool)atoi(argv[i + 1]);         
             if (strcmp(argv[i], "-pad") == 0)
-                pad = (bool)atoi(argv[i + 1]);          
+                pad = (bool)atoi(argv[i + 1]);    
+            if (strcmp(argv[i], "-nonlinear") == 0)
+                nonlinear = (bool)atoi(argv[i + 1]);          
             if (strcmp(argv[i], "-w") == 0)
                 window_size = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -122,6 +124,7 @@ struct cfg
             }
         }
 
+        std::cerr << "nonlinear = " << nonlinear << std::endl;
         std::cerr << "test_auc_threshold = " << test_auc_threshold << std::endl;
         std::cerr << "inv_train = " << inv_train << std::endl;
         std::cerr << "inv_test = " << inv_test << std::endl;
@@ -154,6 +157,7 @@ bool cfg::inv_test = false;
 bool cfg::global_pool = false;
 bool cfg::max_pool = false;
 bool cfg::pad = false;
+bool cfg::nonlinear = true;
 int cfg::dev_id = 0;
 int cfg::node_dim = 0;
 int cfg::iter = 0;
