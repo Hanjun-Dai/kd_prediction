@@ -1,25 +1,26 @@
 #!/bin/bash
 
 DATA=$1
-
+field=$2
 DATA_ROOT=$PWD/../../data/$DATA
-RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn/$DATA
+RESULT_ROOT=$HOME/scratch/results/kd_prediction_gnn/$DATA/$field
 
-tool=$2
+tool=kernel_loopy_bp
 
 LV=$3
-w=$4
-pad=$5
-max_pool=$6
-global_pool=$7
-CONV_SIZE=$8
-FP_LEN=$9
-bsize=${10}
-learning_rate=${11}
-fold=${12}
+w=2
+pad=0
+max_pool=1
+global_pool=1
+CONV_SIZE=$4
+FP_LEN=$4
+bsize=$5
+learning_rate=0.001
+nonlinear=$6
+fold=$7
 n_hidden=96
 scale=1
-max_iter=100000
+max_iter=400000
 cur_iter=0
 dev_id=0
 save_dir=$RESULT_ROOT/$tool-lv-$LV-w-$w-pad-$pad-mx-$max_pool-gp-$global_pool-conv-$CONV_SIZE-fp-$FP_LEN-bsize-$bsize-lr-$learning_rate
@@ -33,6 +34,7 @@ build/$tool \
 	       -result best_pred-fold-$fold.txt \
 	       -global_pool $global_pool \
 	       -scale $scale \
+	       -nonlinear $nonlinear \
                -max_pool $max_pool \
                -pad $pad \
                -w $w \

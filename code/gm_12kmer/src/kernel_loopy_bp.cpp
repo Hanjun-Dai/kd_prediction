@@ -40,7 +40,11 @@ void InitModel()
 	auto* label_layer = cl<InputLayer>("label", gnn, {});
     auto* input_node_linear = cl<ParamLayer>(gnn, {node_input}, {w_n2l}); 
     auto* input_message = cl<ParamLayer>(gnn, {input_node_linear}, {n2esum_param});
-    auto* input_potential_layer = cl<ReLULayer>(gnn, {input_message});
+    ILayer<mode, Dtype>* input_potential_layer;
+	if (cfg::nonlinear)
+		input_potential_layer = cl<ReLULayer>(gnn, {input_message});
+	else
+		input_potential_layer = input_message;
 
     int lv = 0;
     ILayer<mode, Dtype>* cur_message_layer = input_potential_layer;
@@ -53,14 +57,24 @@ void InitModel()
 
     	auto* merged_linear = cl<CAddLayer>(gnn, {edge_linear, input_message}); 
 
-    	cur_message_layer = cl<ReLULayer>(gnn, {merged_linear}); 
+		if (cfg::nonlinear)
+    		cur_message_layer = cl<ReLULayer>(gnn, {merged_linear}); 
+		else
+			cur_message_layer = merged_linear;
     }
 
     auto* e2npool = cl<ParamLayer>(gnn, {cur_message_layer}, {e2nsum_param}); 
-    auto* hidden_msg = cl<ReLULayer>(gnn, {e2npool});
+	ILayer<mode, Dtype>* hidden_msg, *reluact_fp;
+	if (cfg::nonlinear)
+    	hidden_msg = cl<ReLULayer>(gnn, {e2npool});
+	else
+		hidden_msg = e2npool;
     auto* out_linear = cl<ParamLayer>(gnn, {hidden_msg}, {out_params});
-	auto* reluact_fp = cl<ReLULayer>(gnn, {out_linear});	
-
+	if (cfg::nonlinear)
+		reluact_fp = cl<ReLULayer>(gnn, {out_linear});	
+	else
+		reluact_fp = out_linear;
+		
 	ILayer<mode, Dtype>* y_potential = nullptr;
 	if (cfg::max_pool)
 	{
